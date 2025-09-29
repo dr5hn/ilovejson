@@ -16,7 +16,7 @@ export const utils = [
     name: 'Viewer'
   },
   {
-    path: '#editor',
+    path: 'editor',
     name: 'Editor'
   },
   {
