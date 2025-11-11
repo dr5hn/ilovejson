@@ -6,14 +6,14 @@ import AlertError from '@components/error';
 import { tools } from '@constants/tools';
 import { postFile } from '@utils/requests';
 import { mimeTypes } from '@constants/mimetypes';
-
+import Link from 'next/link';
 
 // TODO: Convert it in to actual component
 const Slug = ({ slug }) => {
   const title = slug?.replace(/-/g, ' ');
   const api = slug?.replace(/-/g, '');
   const fileType = slug?.split('-');
-  const [downloadLink, setDownloadLink] = useState(null);
+  const [downloadLink, setDownloadLink] = useState('/');
   const [showError, setShowError] = useState(false);
   const [loading, setLoading] = useState(false);
   const mimeType = (fileType?.length > 0) ? mimeTypes[fileType[0]]: mimeTypes.json;
@@ -112,12 +112,12 @@ const Slug = ({ slug }) => {
 
         {/* Row */}
         <div className={downloadLink ? 'row sm:flex mt-5' : 'hidden'}>
-          <a href={downloadLink} className='mx-auto' download>
+          <Link href={downloadLink} className='mx-auto' download>
             <button className='bg-red-400 hover:bg-red-600 text-white font-semibold py-2 px-4 w-100 border border-gray-400 rounded shadow inline-flex'>
               <svg className="fill-current w-4 h-4 mr-2 mt-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z" /></svg>
               <span>Download</span>
             </button>
-          </a>
+          </Link>
         </div>
       </div>
     </Layout>

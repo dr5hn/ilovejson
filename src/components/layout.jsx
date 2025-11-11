@@ -9,9 +9,9 @@ const Layout = ({
   <div className="antialiased bg-gray-200 flex flex-col min-h-screen">
     <header className="lg:px-16 px-6 bg-white flex flex-wrap items-center lg:py-0 py-2">
       <div className="flex-1 flex justify-between items-center">
-        <a href="/">
+        <Link href="/">
           <img src="/images/logo.png" alt="ilovejson" width="64" />
-        </a>
+        </Link>
       </div>
 
       <label htmlFor="menu-toggle" className="pointer-cursor lg:hidden block">
@@ -27,16 +27,16 @@ const Layout = ({
           <ul className="lg:flex items-center justify-between text-base text-gray-700 pt-4 lg:pt-0">
             {utils.map(({ path, name }) => (
               <li key={name}>
-                <Link href={path} as={path}>
-                  <a className="lg:p-4 py-3 px-0 block border-b-2 border-transparent hover:border-indigo-400">{name}</a>
+                <Link href={path}>
+                  <p className="lg:p-4 py-3 px-0 block border-b-2 border-transparent hover:border-indigo-400">{name}</p>
                 </Link>
               </li>
             ))}
           </ul>
         </nav>
-        <a href="https://github.com/ilovejson/ilovejson" className="lg:ml-4 flex items-center justify-start lg:mb-0 mb-4 pointer-cursor">
+        <Link href="https://github.com/ilovejson/ilovejson" className="lg:ml-4 flex items-center justify-start lg:mb-0 mb-4 pointer-cursor">
           <img className="rounded-full w-10 h-10 border-2 border-transparent hover:border-red-400" src="/images/github.png" alt="ilovejson" />
-        </a>
+        </Link>
       </div>
     </header>
 
