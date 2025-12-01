@@ -5,7 +5,7 @@
   "main": "index.js",
   "private": true,
   "dependencies": {
-    "@prantlf/jsonlint": "^14.0.0",
+    "@prantlf/jsonlint": "^16.0.0",
     "formidable": "^2.0.1",
     "generate-schema": "^2.6.0",
     "json-2-csv": "^5.5.10",
