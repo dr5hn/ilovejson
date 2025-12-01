@@ -640,10 +640,10 @@
     "@emnapi/runtime" "^1.4.3"
     "@tybys/wasm-util" "^0.10.0"
 
-"@next/codemod@16.0.3":
-  version "16.0.3"
-  resolved "https://registry.yarnpkg.com/@next/codemod/-/codemod-16.0.3.tgz#dcb881e8038740218d04c9a6a2927e6ecf209138"
-  integrity sha512-rcJMD8LtYNKzvcKjfqCXsG6hAPuQvfbokqfKNad+OdXBI+IOJtDXHL4zop6ZGGvy/CL+14Wm+RH8MX1pY5oN8A==
+"@next/codemod@16.0.6":
+  version "16.0.6"
+  resolved "https://registry.yarnpkg.com/@next/codemod/-/codemod-16.0.6.tgz#d17e93162858e7a7b8bfb7bf6ae9d84c4ab41627"
+  integrity sha512-IqLNSCs0Gz4MfGET1albmq7VWmL4IeXYe9pLOoC1ROLLI9qQ/q+4K8uPnYY00Zo7inrL8jty7BOO5jKBnNnD/Q==
   dependencies:
     cheerio "1.0.0-rc.9"
     commander "12.1.0"

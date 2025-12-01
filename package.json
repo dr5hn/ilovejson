@@ -18,7 +18,7 @@
     "yaml": "^2.1.0"
   },
   "devDependencies": {
-    "@next/codemod": "16.0.3",
+    "@next/codemod": "16.0.6",
     "@types/react": "19.2.6",
     "@types/react-dom": "19.2.3",
     "autoprefixer": "^10.4.0",
