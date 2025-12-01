@@ -15,7 +15,7 @@
     "react-dropzone": "^14.2.1",
     "react-json-view": "^1.21.3",
     "xml-js": "^1.6.11",
-    "yaml": "^2.1.0"
+    "yaml": "^2.8.2"
   },
   "devDependencies": {
     "@next/codemod": "16.0.3",
