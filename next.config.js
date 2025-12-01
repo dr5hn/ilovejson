@@ -6,5 +6,5 @@ module.exports = {
   distDir: 'dist',
   // useFileSystemPublicRoutes: false,
   // dontAutoRegisterSw: !isProd,
-  swcMinify: true,
+  // swcMinify is now default in Next.js 13+, removed for Next.js 16
 }

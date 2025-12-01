@@ -2,7 +2,7 @@
 
 ## Prerequisites
 Ensure you have the following installed:
-- [NodeJS v16.x](https://nodejs.org/en/download/)
+- [NodeJS v22.x or higher](https://nodejs.org/en/download/)
 - [Visual Studio Code](https://code.visualstudio.com/download)
 
 ## Getting Started
