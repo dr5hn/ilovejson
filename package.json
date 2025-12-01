@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@next/codemod": "16.0.3",
-    "@types/react": "19.2.6",
+    "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "autoprefixer": "^10.4.0",
     "eslint": "^9.39.1",
@@ -51,7 +51,7 @@
     "node": ">=22.0.0"
   },
   "resolutions": {
-    "@types/react": "19.2.6",
+    "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3"
   }
 }
