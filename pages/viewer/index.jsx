@@ -7,8 +7,8 @@ import AlertError from '@components/error';
 
 const Viewer = () => {
   // Note : We need to dynamically load this component, issue ref
-  // https://github.com/mac-s-g/react-json-view/issues/121#issuecomment-437267883
-  const DynamicReactJson = dynamic(import('react-json-view'), { ssr: false });
+  // https://github.com/microlinkhq/react-json-view/issues/121#issuecomment-437267883
+  const DynamicReactJson = dynamic(import('@microlink/react-json-view'), { ssr: false });
 
   const [sourceJSON, setSourceJSON] = useState('');
   const [outputJSON, setOutputJSON] = useState('');

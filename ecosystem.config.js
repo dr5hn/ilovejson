@@ -1,7 +1,7 @@
 module.exports = {
   apps: [{
     name: "ilovejson",
-    script: "yarn",
+    script: "npm",
     args: "start",
     watch: false,
     interpreter: '/usr/bin/bash',

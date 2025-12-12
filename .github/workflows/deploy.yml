@@ -27,7 +27,7 @@ jobs:
             ssh-add ~/.ssh/git_rsa
             git checkout .
             git pull
-            yarn install
-            yarn build
+            npm ci
+            npm run build
             pm2 reload ilovejson --update-env
           debug: true
