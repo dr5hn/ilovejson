@@ -1,6 +1,6 @@
-@import 'tailwind.css';
-@import 'reset.css';
-@import 'global.css';
-@import 'home.css';
-@import 'upload.css';
-@import 'tools.css';
+@import './tailwind.css';
+@import './reset.css';
+@import './global.css';
+@import './home.css';
+@import './upload.css';
+@import './tools.css';

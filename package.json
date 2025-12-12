@@ -5,7 +5,9 @@
   "main": "index.js",
   "private": true,
   "dependencies": {
+    "@microlink/react-json-view": "^1.23.0",
     "@prantlf/jsonlint": "^16.0.0",
+    "@tailwindcss/postcss": "4.1.16",
     "formidable": "^3.5.4",
     "generate-schema": "^2.6.0",
     "json-2-csv": "^5.5.10",
@@ -13,7 +15,6 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-dropzone": "^14.3.8",
-    "@microlink/react-json-view": "^1.23.0",
     "xml-js": "^1.6.11",
     "yaml": "^2.8.2"
   },
@@ -30,7 +31,7 @@
     "typescript": "^5.9.3"
   },
   "scripts": {
-    "dev": "next",
+    "dev": "PORT=3002 next",
     "build": "next build",
     "start": "next start -p 3000",
     "test": "echo \"Error: no test specified\" && exit 1",
