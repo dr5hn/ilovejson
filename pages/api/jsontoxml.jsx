@@ -18,8 +18,8 @@ export const config = {
 
 const xmlOptions = {
   compact: true, // BUGGY
-  ignoreComment: true,
-  spaces: 4
+  ignoreComment: false,
+  spaces: 2
 }
 
 // Process a POST request
@@ -43,11 +43,36 @@ export default async (req, res) => {
     return ReE(res, 'I ❤️ JSON. But you forgot to bring something to me.');
   }
 
-  var jsonRead = fs.readFileSync(data.files?.fileInfo?.filepath, 'utf8');
+  // Get file path - handle different formidable structures
+  const fileInfo = data.files.fileInfo;
+  let filePath = fileInfo.filepath || fileInfo.path;
+  if (Array.isArray(fileInfo)) {
+    const firstFile = fileInfo[0];
+    filePath = firstFile.filepath || firstFile.path;
+  }
+  if (!filePath) {
+    return ReE(res, 'I ❤️ JSON. But I couldn\'t find the file path.');
+  }
+
+  var jsonRead = fs.readFileSync(filePath, 'utf8');
 
   try {
     if (JSON.parse(jsonRead) && !!jsonRead) {
-      var xmlOp = convert.json2xml(jsonRead, xmlOptions);
+      let jsonData = JSON.parse(jsonRead);
+      // Prepare data structure for XML conversion
+      let dataToConvert;
+      if (Array.isArray(jsonData)) {
+        // For arrays, create root with multiple item elements
+        dataToConvert = { root: { item: jsonData } };
+      } else {
+        // For single object, wrap in root with single item
+        dataToConvert = { root: { item: [jsonData] } };
+      }
+
+      var xmlOp = convert.json2xml(JSON.stringify(dataToConvert), xmlOptions);
+      
+      // Add XML declaration
+      xmlOp = '<?xml version="1.0" encoding="UTF-8"?>\n\n' + xmlOp;
 
       const modifiedDate = new Date().getTime();
       const filePath = `${downloadDir}/${modifiedDate}.xml`;

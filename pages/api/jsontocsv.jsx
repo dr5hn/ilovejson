@@ -1,7 +1,7 @@
 import { IncomingForm } from 'formidable';
 import { initDirs } from '@utils/initdir';
 import { globals } from '@constants/globals';
-import { json2csvAsync } from 'json-2-csv';
+import { json2csv } from 'json-2-csv';
 import { ReE, ReS } from '@utils/reusables';
 
 const fs = require('fs');
@@ -44,29 +44,41 @@ export default async (req, res) => {
   if (!(data.files && data.files.fileInfo)) {
     return ReE(res, 'I ❤️ JSON. But you forgot to bring something to me.');
   }
+  
+  // Get file path - handle different formidable structures
+  const fileInfo = data.files.fileInfo;
+  let filePath = fileInfo.filepath || fileInfo.path;
+  
+  // If fileInfo is an array, get the first element
+  if (Array.isArray(fileInfo)) {
+    const firstFile = fileInfo[0];
+    filePath = firstFile.filepath || firstFile.path;
+  }
+  
+  if (!filePath) {
+    console.error('File path not found. FileInfo structure:', JSON.stringify(fileInfo, null, 2));
+    return ReE(res, 'I ❤️ JSON. But I couldn\'t find the file path.');
+  }
 
-  var jsonRead = fs.readFileSync(data.files?.fileInfo?.filepath, 'utf8');
+  var jsonRead = fs.readFileSync(filePath, 'utf8');
   try {
     if (JSON.parse(jsonRead) && !!jsonRead) {
-      await json2csvAsync(JSON.parse(jsonRead), options)
-        .then(async (csv) => {
-          const modifiedDate = new Date().getTime();
-          const filePath = `${downloadDir}/${modifiedDate}.csv`;
-          fs.writeFileSync(filePath, csv, 'utf8');
+      const jsonData = JSON.parse(jsonRead);
+      const csv = json2csv(jsonData, options);
+      
+      const modifiedDate = new Date().getTime();
+      const outputFilePath = `${downloadDir}/${modifiedDate}.csv`;
+      fs.writeFileSync(outputFilePath, csv, 'utf8');
 
-          let toPath = filePath.replace('public/', '');
+      let toPath = outputFilePath.replace('public/', '');
 
-          return ReS(res, {
-            message: 'I ❤️ JSON. JSON to CSV Conversion Successful.',
-            data: `/${toPath}`
-          });
-        })
-        .catch((err) => {
-          console.log('ERROR: ' + err.message);
-          return ReE(res, err.message);
-        });
+      return ReS(res, {
+        message: 'I ❤️ JSON. JSON to CSV Conversion Successful.',
+        data: `/${toPath}`
+      });
     }
   } catch (e) {
+    console.log('ERROR: ' + e.message);
     return ReE(res, 'I ❤️ JSON. But you have entered invalid JSON.');
   }
 }

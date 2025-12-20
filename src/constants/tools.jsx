@@ -42,9 +42,33 @@ export const tools = [
     slug: 'json-to-php'
   },
   {
+    from: 'PHP',
+    to: 'JSON',
+    description: 'Make PHP array files easy to read by converting them to JSON.',
+    slug: 'php-to-json'
+  },
+  {
+    from: 'JSON',
+    to: 'Markdown',
+    description: 'Make JSON files easy to read by converting them to Markdown.',
+    slug: 'json-to-markdown'
+  },
+  {
+    from: 'Markdown',
+    to: 'JSON',
+    description: 'Make Markdown files easy to read by converting them to JSON.',
+    slug: 'markdown-to-json'
+  },
+  {
     from: 'JSON',
     to: 'HTML',
-    description: 'Make JSON files easy to read by converting them to HTML TABLE.',
-    slug: 'json-to-table'
+    description: 'Make JSON files easy to read by converting them to HTML.',
+    slug: 'json-to-html'
+  },
+  {
+    from: 'HTML',
+    to: 'JSON',
+    description: 'Make HTML files easy to read by converting them to JSON.',
+    slug: 'html-to-json'
   }
 ];

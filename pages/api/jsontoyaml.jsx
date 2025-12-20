@@ -43,7 +43,18 @@ export default async (req, res) => {
     return ReE(res, 'I ❤️ JSON. But you forgot to bring something to me.');
   }
 
-  var jsonRead = fs.readFileSync(data.files?.fileInfo?.filepath, 'utf8');
+  // Get file path - handle different formidable structures
+  const fileInfo = data.files.fileInfo;
+  let filePath = fileInfo.filepath || fileInfo.path;
+  if (Array.isArray(fileInfo)) {
+    const firstFile = fileInfo[0];
+    filePath = firstFile.filepath || firstFile.path;
+  }
+  if (!filePath) {
+    return ReE(res, 'I ❤️ JSON. But I couldn\'t find the file path.');
+  }
+
+  var jsonRead = fs.readFileSync(filePath, 'utf8');
   try {
     if (JSON.parse(jsonRead) && !!jsonRead) {
       const yaml = YAML.stringify(JSON.parse(jsonRead), yamlOptions);
