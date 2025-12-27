@@ -20,7 +20,7 @@ const Slug = ({ slug }) => {
   const [converted, setConverted] = useState(false);
   const mimeType = (fileType?.length > 0) ? mimeTypes[fileType[0]]: mimeTypes.json;
 
-  const maxSize = 1048576;
+  const maxSize = 1048576; // 1MB
 
   // Reset state when a new file is selected
   const handleFileAccepted = () => {
@@ -46,7 +46,7 @@ const Slug = ({ slug }) => {
 
       try {
         const response = await postFile(`api/${api}`, formData);
-        
+
         // Check if response indicates an error
         if (!response || response.success === false) {
           const errorMessage = response?.error || response?.message || 'Conversion failed';
@@ -56,19 +56,19 @@ const Slug = ({ slug }) => {
         // Handle different response structures
         // ReS returns { success: true, message: '...', data: '...' }
         const filePath = response?.data || '';
-        
+
         if (!filePath || typeof filePath !== 'string') {
           throw new Error('No file path returned from server');
         }
-        
+
         setDownloadLink(filePath);
-        
+
         // Generate filename from original filename with timestamp
         const originalName = file.name.split('.')[0];
         const timestamp = new Date().getTime();
         const fileExtension = fileType && fileType.length > 0 ? fileType[fileType.length - 1] : 'json';
         const filename = `${originalName}_${timestamp}.${fileExtension}`;
-        
+
         setDownloadFilename(filename);
         setConverted(true);
         setLoading(false);
@@ -76,7 +76,7 @@ const Slug = ({ slug }) => {
       } catch (err) {
         console.error('Conversion Error:', err);
         let errorMsg = err.message || 'Conversion failed. Please try again.';
-        
+
         // Format error messages based on conversion type
         const errorPrefixes = {
           'jsontocsv': 'JSON to CSV',
@@ -92,12 +92,12 @@ const Slug = ({ slug }) => {
           'jsontohtml': 'JSON to HTML',
           'htmltojson': 'HTML to JSON'
         };
-        
+
         const prefix = errorPrefixes[api] || 'Conversion';
         if (!errorMsg.includes(prefix.split(' ')[0])) {
           errorMsg = `${prefix} conversion failed: ${errorMsg}`;
         }
-        
+
         setErrorMessage(errorMsg);
         setShowError(true);
         setLoading(false);
@@ -126,7 +126,9 @@ const Slug = ({ slug }) => {
     onDropAccepted: handleFileAccepted
   });
 
-  const isFileTooLarge = fileRejections?.length > 0 && fileRejections[0].size > maxSize;
+  const isFileTooLarge = fileRejections?.length > 0 && fileRejections[0]?.file?.size > maxSize;
+  const rejectedFileSize = isFileTooLarge ? (fileRejections[0]?.file?.size / 1048576).toFixed(2) : 0;
+  const maxSizeMB = (maxSize / 1048576).toFixed(0);
 
   const style = useMemo(() => ({
     ...(isDragActive ? { borderColor: '#2196f3' } : {}),
@@ -148,14 +150,19 @@ const Slug = ({ slug }) => {
 
         <div {...getRootProps({ className: 'dropzone h-fifty', ...style })}>
           <input {...getInputProps()} />
+          {/* Display instructions and visual feedback depending on drag/drop state */}
           {!isDragActive && 'Click here or drop a file to upload!'}
           {isDragActive && !isDragReject && "Drop it like it's hot!"}
           {isDragReject && "File type not accepted, sorry!"}
+
+          {/* Show error if file is rejected for being too large */}
           {isFileTooLarge && (
-            <div className="text-danger mt-2">
-              File is too large.
+            <div className="text-red-600 mt-3 p-3 bg-red-50 border border-red-300 rounded-md">
+              <strong>File too large!</strong> Your file is {rejectedFileSize}MB. Maximum allowed size is {maxSizeMB}MB.
             </div>
           )}
+
+          {/* List accepted files */}
           <ul className="list-group mt-2 list-none text-green-400 font-semibold">
             {acceptedFiles.length > 0 && acceptedFiles.map(acceptedFile => (
               <li className="bg-green" key={acceptedFile.name}>
@@ -164,14 +171,13 @@ const Slug = ({ slug }) => {
             ))}
           </ul>
         </div>
-
         {/* Row */}
         <AlertError message={errorMessage} showError={showError} />
 
         {/* Convert Button - Show when file is selected and not converted yet */}
         {acceptedFiles.length > 0 && !loading && !converted && (
           <div className="row sm:flex mt-5">
-            <button 
+            <button
               className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg mx-auto transition-colors duration-200 inline-flex items-center"
               onClick={handleSubmit}
             >
@@ -196,8 +202,8 @@ const Slug = ({ slug }) => {
         {/* Download Button - Show only after successful conversion */}
         {converted && downloadLink && !loading && (
           <div className="row sm:flex mt-5">
-            <a 
-              href={downloadLink} 
+            <a
+              href={downloadLink}
               download={downloadFilename}
               className='mx-auto'
               style={{ textDecoration: 'none' }}
