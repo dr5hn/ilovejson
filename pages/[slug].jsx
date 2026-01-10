@@ -1,13 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 import Layout from '@components/layout';
 import AlertError from '@components/error';
+import KeyboardShortcutHelp from '@components/KeyboardShortcutHelp';
+import { ConversionLoader, LargeFileIndicator } from '@components/LoadingState';
 import { tools } from '@constants/tools';
-import { postFile } from '@utils/requests';
+import { globals } from '@constants/globals';
+import { postFileWithProgress } from '@utils/requests';
 import { mimeTypes } from '@constants/mimetypes';
+import { useKeyboardShortcuts } from '@hooks/useKeyboardShortcuts';
 
-// TODO: Convert it in to actual component
 const Slug = ({ slug }) => {
   const title = slug?.replace(/-/g, ' ');
   const api = slug?.replace(/-/g, '');
@@ -18,9 +21,13 @@ const Slug = ({ slug }) => {
   const [showError, setShowError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [converted, setConverted] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [processingStage, setProcessingStage] = useState('');
   const mimeType = (fileType?.length > 0) ? mimeTypes[fileType[0]]: mimeTypes.json;
 
-  const maxSize = 1048576; // 1MB
+  // 100MB limit (from globals)
+  const maxSize = globals.maxFileSize.free;
+  const largeFileThreshold = globals.largeFileWarningThreshold;
 
   // Reset state when a new file is selected
   const handleFileAccepted = () => {
@@ -29,23 +36,41 @@ const Slug = ({ slug }) => {
       setDownloadFilename('');
       setConverted(false);
       setShowError(false);
+      setUploadProgress(0);
+      setProcessingStage('');
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (acceptedFiles.length) {
       setLoading(true);
       setShowError(false);
       setConverted(false);
       setDownloadLink('');
       setDownloadFilename('');
+      setUploadProgress(0);
+      setProcessingStage('Uploading file...');
 
       const file = acceptedFiles[0];
       const formData = new FormData();
       formData.append('fileInfo', file);
 
+      // Determine if we should use progress tracking (for large files)
+      const isLargeFile = file.size > largeFileThreshold;
+
       try {
-        const response = await postFile(`api/${api}`, formData);
+        const handleProgress = ({ stage, progress, message }) => {
+          setUploadProgress(progress);
+          if (stage === 'upload') {
+            setProcessingStage(`Uploading... ${progress}%`);
+          } else if (stage === 'processing') {
+            setProcessingStage(message || 'Converting your file...');
+          } else if (stage === 'complete') {
+            setProcessingStage('Complete!');
+          }
+        };
+
+        const response = await postFileWithProgress(`api/${api}`, formData, isLargeFile ? handleProgress : null);
 
         // Check if response indicates an error
         if (!response || response.success === false) {
@@ -54,7 +79,6 @@ const Slug = ({ slug }) => {
         }
 
         // Handle different response structures
-        // ReS returns { success: true, message: '...', data: '...' }
         const filePath = response?.data || '';
 
         if (!filePath || typeof filePath !== 'string') {
@@ -73,6 +97,7 @@ const Slug = ({ slug }) => {
         setConverted(true);
         setLoading(false);
         setShowError(false);
+        setProcessingStage('');
       } catch (err) {
         console.error('Conversion Error:', err);
         let errorMsg = err.message || 'Conversion failed. Please try again.';
@@ -102,12 +127,23 @@ const Slug = ({ slug }) => {
         setShowError(true);
         setLoading(false);
         setConverted(false);
+        setProcessingStage('');
         setTimeout(() => {
           setShowError(false);
         }, 8000);
       }
     }
-  }
+  }, [api, fileType, largeFileThreshold]);
+
+  const handleReset = useCallback(() => {
+    setDownloadLink('');
+    setDownloadFilename('');
+    setConverted(false);
+    setShowError(false);
+    setLoading(false);
+    setUploadProgress(0);
+    setProcessingStage('');
+  }, []);
 
   const {
     isDragActive,
@@ -126,9 +162,24 @@ const Slug = ({ slug }) => {
     onDropAccepted: handleFileAccepted
   });
 
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    'mod+enter': () => {
+      if (acceptedFiles.length > 0 && !loading && !converted) {
+        handleSubmit();
+      }
+    },
+    'escape': handleReset
+  }, { enabled: true });
+
   const isFileTooLarge = fileRejections?.length > 0 && fileRejections[0]?.file?.size > maxSize;
   const rejectedFileSize = isFileTooLarge ? (fileRejections[0]?.file?.size / 1048576).toFixed(2) : 0;
   const maxSizeMB = (maxSize / 1048576).toFixed(0);
+
+  // Check if selected file is large (for warning)
+  const selectedFile = acceptedFiles[0];
+  const isLargeFile = selectedFile && selectedFile.size > largeFileThreshold;
+  const selectedFileSizeMB = selectedFile ? selectedFile.size / 1048576 : 0;
 
   const style = useMemo(() => ({
     ...(isDragActive ? { borderColor: '#2196f3' } : {}),
@@ -148,7 +199,10 @@ const Slug = ({ slug }) => {
 
       <div className="mt-10 w-full">
 
-        <div {...getRootProps({ className: 'dropzone h-fifty', ...style })}>
+        <div {...getRootProps({
+          className: 'dropzone h-fifty bg-white dark:bg-dark-surface border-2 border-dashed border-gray-300 dark:border-dark-border text-gray-700 dark:text-dark-text hover:border-blue-400 dark:hover:border-blue-500 transition-colors duration-200',
+          ...style
+        })}>
           <input {...getInputProps()} />
           {/* Display instructions and visual feedback depending on drag/drop state */}
           {!isDragActive && 'Click here or drop a file to upload!'}
@@ -157,19 +211,24 @@ const Slug = ({ slug }) => {
 
           {/* Show error if file is rejected for being too large */}
           {isFileTooLarge && (
-            <div className="text-red-600 mt-3 p-3 bg-red-50 border border-red-300 rounded-md">
+            <div className="text-red-600 dark:text-red-400 mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-md">
               <strong>File too large!</strong> Your file is {rejectedFileSize}MB. Maximum allowed size is {maxSizeMB}MB.
             </div>
           )}
 
           {/* List accepted files */}
-          <ul className="list-group mt-2 list-none text-green-400 font-semibold">
+          <ul className="list-group mt-2 list-none text-green-500 dark:text-green-400 font-semibold">
             {acceptedFiles.length > 0 && acceptedFiles.map(acceptedFile => (
               <li className="bg-green" key={acceptedFile.name}>
                 {acceptedFile.name}
               </li>
             ))}
           </ul>
+
+          {/* Large file warning */}
+          {isLargeFile && !loading && !converted && (
+            <LargeFileIndicator sizeMB={selectedFileSizeMB} />
+          )}
         </div>
         {/* Row */}
         <AlertError message={errorMessage} showError={showError} />
@@ -178,7 +237,7 @@ const Slug = ({ slug }) => {
         {acceptedFiles.length > 0 && !loading && !converted && (
           <div className="row sm:flex mt-5">
             <button
-              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg mx-auto transition-colors duration-200 inline-flex items-center"
+              className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg mx-auto transition-colors duration-200 inline-flex items-center"
               onClick={handleSubmit}
             >
               <svg className="fill-current w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -192,9 +251,16 @@ const Slug = ({ slug }) => {
         {/* Loader - Show when converting */}
         {loading && (
           <div className="row sm:flex mt-5">
-            <div className="mx-auto text-center">
-              <div className='loader ease-linear rounded-full border-7 border-t-8 border-gray-200 h-10 w-10 mx-auto'></div>
-              <p className="mt-2 text-gray-600">Converting your file...</p>
+            <div className="mx-auto text-center w-full max-w-md">
+              {isLargeFile ? (
+                <ConversionLoader
+                  message={processingStage}
+                  progress={uploadProgress}
+                  stage={processingStage}
+                />
+              ) : (
+                <ConversionLoader message={processingStage || 'Converting your file...'} />
+              )}
             </div>
           </div>
         )}
@@ -213,7 +279,7 @@ const Slug = ({ slug }) => {
                 }, 100);
               }}
             >
-              <button className='bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg inline-flex items-center transition-colors duration-200'>
+              <button className='bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg inline-flex items-center transition-colors duration-200'>
                 <svg className="fill-current w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                   <path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z" />
                 </svg>
@@ -223,6 +289,9 @@ const Slug = ({ slug }) => {
           </div>
         )}
       </div>
+
+      {/* Keyboard shortcut help */}
+      <KeyboardShortcutHelp />
     </Layout>
   );
 }

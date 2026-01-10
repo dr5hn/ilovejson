@@ -1,7 +1,5 @@
 import { initDirs } from '@utils/initdir';
 import { globals } from '@constants/globals';
-import { initDirs } from '@utils/initdir';
-import { globals } from '@constants/globals';
 import { ReS } from '@utils/reusables';
 import { runMiddleware } from '@middleware/apiMiddleware';
 import { validateMethod } from '@middleware/methodValidation';

@@ -3,17 +3,36 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   padding: 20px;
   border-width: 2px;
-  border-radius: 2px;
-  border-color: #eeeeee;
+  border-radius: 8px;
+  border-color: #d1d5db;
   border-style: dashed;
-  background-color: #fafafa;
-  color: #bdbdbd;
+  background-color: #ffffff;
+  color: #6b7280;
   outline: none;
-  transition: border .24s ease-in-out;
+  transition: all .24s ease-in-out;
+  cursor: pointer;
+}
+
+.dropzone:hover {
+  border-color: #3b82f6;
+  background-color: #f9fafb;
 }
 
 .dropzone:focus {
   border-color: #2196f3;
+}
+
+/* Dark mode styles */
+.dark .dropzone {
+  background-color: #2d2d2d;
+  border-color: #404040;
+  color: #a0a0a0;
+}
+
+.dark .dropzone:hover {
+  border-color: #3b82f6;
+  background-color: #363636;
 }
