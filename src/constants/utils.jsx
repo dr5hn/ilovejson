@@ -26,5 +26,21 @@ export const utils = [
   {
     path: 'generateschema',
     name: 'Generate Schema'
+  },
+  {
+    path: 'diff',
+    name: 'Diff'
+  },
+  {
+    path: 'merge',
+    name: 'Merge'
+  },
+  {
+    path: 'query',
+    name: 'Query'
+  },
+  {
+    path: 'faker',
+    name: 'Faker'
   }
 ];

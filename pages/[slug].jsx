@@ -4,12 +4,14 @@ import { useDropzone } from 'react-dropzone';
 import Layout from '@components/layout';
 import AlertError from '@components/error';
 import KeyboardShortcutHelp from '@components/KeyboardShortcutHelp';
+import FileHistory from '@components/FileHistory';
 import { ConversionLoader, LargeFileIndicator } from '@components/LoadingState';
 import { tools } from '@constants/tools';
 import { globals } from '@constants/globals';
 import { postFileWithProgress } from '@utils/requests';
 import { mimeTypes } from '@constants/mimetypes';
 import { useKeyboardShortcuts } from '@hooks/useKeyboardShortcuts';
+import { useFileHistory } from '@hooks/useFileHistory';
 
 const Slug = ({ slug }) => {
   const title = slug?.replace(/-/g, ' ');
@@ -24,6 +26,7 @@ const Slug = ({ slug }) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [processingStage, setProcessingStage] = useState('');
   const mimeType = (fileType?.length > 0) ? mimeTypes[fileType[0]]: mimeTypes.json;
+  const { addToHistory } = useFileHistory();
 
   // 100MB limit (from globals)
   const maxSize = globals.maxFileSize.free;
@@ -98,6 +101,15 @@ const Slug = ({ slug }) => {
         setLoading(false);
         setShowError(false);
         setProcessingStage('');
+
+        // Add to file history
+        addToHistory({
+          fileName: file.name,
+          fromFormat: fileType[0].toUpperCase(),
+          toFormat: fileType[fileType.length - 1].toUpperCase(),
+          downloadLink: filePath,
+          fileSize: file.size,
+        });
       } catch (err) {
         console.error('Conversion Error:', err);
         let errorMsg = err.message || 'Conversion failed. Please try again.';
@@ -133,7 +145,7 @@ const Slug = ({ slug }) => {
         }, 8000);
       }
     }
-  }, [api, fileType, largeFileThreshold]);
+  }, [api, fileType, largeFileThreshold, addToHistory]);
 
   const handleReset = useCallback(() => {
     setDownloadLink('');
@@ -288,6 +300,9 @@ const Slug = ({ slug }) => {
             </a>
           </div>
         )}
+
+        {/* File History */}
+        <FileHistory />
       </div>
 
       {/* Keyboard shortcut help */}
