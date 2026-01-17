@@ -1,7 +1,11 @@
-import { IncomingForm } from 'formidable';
 import { initDirs } from '@utils/initdir';
 import { globals } from '@constants/globals';
-import { ReE, ReS } from '@utils/reusables';
+import { ReS } from '@utils/reusables';
+import { runMiddleware } from '@middleware/apiMiddleware';
+import { validateMethod } from '@middleware/methodValidation';
+import { rateLimit } from '@middleware/rateLimit';
+import { parseFile } from '@middleware/fileParser';
+import { errorHandler } from '@middleware/errorHandler';
 
 const fs = require('fs');
 initDirs();
@@ -217,59 +221,30 @@ function htmlToJson(htmlContent) {
   }
 }
 
-// Process a POST request
-export default async (req, res) => {
-  // TODO: This should be in middleware.
-  if (req.method !== 'POST') {
-    return ReE(res, 'I ❤️ JSON. But you shouldn\'t be here.');
-  }
 
-  // parse form with a Promise wrapper
-  const data = await new Promise((resolve, reject) => {
-    const form = new IncomingForm();
-    form.uploadDir = uploadDir;
-    form.keepExtensions = true;
-    form.parse(req, async (_err, _fields, files) => {
-      if (_err) return reject(_err);
-      resolve({ _fields, files });
-    });
+async function handler(req, res) {
+  // Run all middleware
+  await runMiddleware(req, res, [
+    validateMethod(['POST']),
+    rateLimit({ maxRequests: 20, windowMs: 60000 }),
+    parseFile(uploadDir, { maxFileSize: 104857600 }), // 100MB
+  ]);
+
+  // Core conversion logic
+  const htmlRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
+  const jsonData = htmlToJson(htmlRead);
+  const jsonContent = JSON.stringify(jsonData, null, 4);
+
+  const modifiedDate = new Date().getTime();
+  const outputFilePath = `${downloadDir}/${modifiedDate}.json`;
+  fs.writeFileSync(outputFilePath, jsonContent, 'utf8');
+
+  const toPath = outputFilePath.replace('public/', '');
+
+  return ReS(res, {
+    message: 'I ❤️ JSON. HTML to JSON Conversion Successful.',
+    data: `/${toPath}`,
   });
-
-  if (!(data.files && data.files.fileInfo)) {
-    return ReE(res, 'I ❤️ JSON. But you forgot to bring something to me.');
-  }
-
-  // Get file path - handle different formidable structures
-  const fileInfo = data.files.fileInfo;
-  let filePath = fileInfo.filepath || fileInfo.path;
-  if (Array.isArray(fileInfo)) {
-    const firstFile = fileInfo[0];
-    filePath = firstFile.filepath || firstFile.path;
-  }
-  if (!filePath) {
-    return ReE(res, 'I ❤️ JSON. But I couldn\'t find the file path.');
-  }
-
-  const htmlRead = fs.readFileSync(filePath, 'utf8');
-  try {
-   
-    const jsonData = htmlToJson(htmlRead);
-    const jsonContent = JSON.stringify(jsonData, null, 4);
-    
-    if (!!jsonContent) {
-      const modifiedDate = new Date().getTime();
-      const filePath = `${downloadDir}/${modifiedDate}.json`;
-      fs.writeFileSync(filePath, jsonContent, 'utf8');
-
-      let toPath = filePath.replace('public/', '');
-
-      return ReS(res, {
-        message: 'I ❤️ JSON. HTML to JSON Conversion Successful.',
-        data: `/${toPath}`
-      });
-    }
-  } catch (e) {
-    return ReE(res, 'I ❤️ JSON. But you have entered invalid HTML.');
-  }
 }
 
+export default errorHandler(handler);

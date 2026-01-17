@@ -1,7 +1,27 @@
 import '../styles/index.css';
 import Head from 'next/head';
+import { SessionProvider } from 'next-auth/react';
+import { ThemeProvider } from '@contexts/ThemeContext';
 
-function MyApp({ Component, pageProps }) {
+// Inline script to prevent FOUC (Flash of Unstyled Content)
+const ThemeScript = () => {
+  const script = `
+    (function() {
+      try {
+        var theme = localStorage.getItem('theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (theme === 'dark' || (!theme && prefersDark)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {}
+    })();
+  `;
+  return <script dangerouslySetInnerHTML={{ __html: script }} />;
+};
+
+function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   const og = pageProps.data?.og
   const title = pageProps.data?.title
 
@@ -37,7 +57,12 @@ function MyApp({ Component, pageProps }) {
         <meta name='theme-color' content='#FFFFFF' />
       </Head>
 
-      <Component {...pageProps} />
+      <ThemeScript />
+      <SessionProvider session={session}>
+        <ThemeProvider>
+          <Component {...pageProps} />
+        </ThemeProvider>
+      </SessionProvider>
     </>
   )
 }

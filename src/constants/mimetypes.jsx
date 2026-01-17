@@ -19,5 +19,25 @@ export const mimeTypes = {
     'text/x-yaml': ['.yaml', '.yml'],
     'application/x-yaml': ['.yaml', '.yml'],
     'application/yaml': ['.yaml', '.yml']
+  },
+  toml: {
+    'application/toml': ['.toml'],
+    'text/toml': ['.toml'],
+    'text/x-toml': ['.toml']
+  },
+  excel: {
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+    'application/vnd.ms-excel': ['.xls', '.xlsx']
+  },
+  sql: {
+    'application/sql': ['.sql'],
+    'text/sql': ['.sql'],
+    'text/x-sql': ['.sql'],
+    'text/plain': ['.sql']
+  },
+  typescript: {
+    'text/typescript': ['.ts'],
+    'application/typescript': ['.ts'],
+    'text/plain': ['.ts']
   }
 };

@@ -70,5 +70,53 @@ export const tools = [
     to: 'JSON',
     description: 'Make HTML files easy to read by converting them to JSON.',
     slug: 'html-to-json'
+  },
+  {
+    from: 'JSON',
+    to: 'TOML',
+    description: 'Convert JSON files to TOML configuration format.',
+    slug: 'json-to-toml'
+  },
+  {
+    from: 'TOML',
+    to: 'JSON',
+    description: 'Convert TOML configuration files to JSON.',
+    slug: 'toml-to-json'
+  },
+  {
+    from: 'JSON',
+    to: 'SQL',
+    description: 'Generate SQL INSERT statements from JSON data.',
+    slug: 'json-to-sql'
+  },
+  {
+    from: 'SQL',
+    to: 'JSON',
+    description: 'Parse SQL INSERT statements into JSON objects.',
+    slug: 'sql-to-json'
+  },
+  {
+    from: 'JSON',
+    to: 'TypeScript',
+    description: 'Generate TypeScript interfaces from JSON structure.',
+    slug: 'json-to-typescript'
+  },
+  {
+    from: 'TypeScript',
+    to: 'JSON',
+    description: 'Extract JSON schema from TypeScript interfaces.',
+    slug: 'typescript-to-json'
+  },
+  {
+    from: 'JSON',
+    to: 'Excel',
+    description: 'Convert JSON arrays to Excel spreadsheets.',
+    slug: 'json-to-excel'
+  },
+  {
+    from: 'Excel',
+    to: 'JSON',
+    description: 'Convert Excel spreadsheets to JSON format.',
+    slug: 'excel-to-json'
   }
 ];
