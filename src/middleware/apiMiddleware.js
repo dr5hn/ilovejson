@@ -12,23 +12,53 @@
  * @param {Array<Function>} middlewares - Array of middleware functions
  * @returns {Promise<void>}
  */
-export function runMiddleware(req, res, middlewares) {
-  return new Promise((resolve, reject) => {
-    let index = 0;
+export async function runMiddleware(req, res, middlewares) {
+  const responseFinished = () => res.headersSent || res.writableEnded;
 
-    const next = (err) => {
-      if (err) return reject(err);
+  for (const middleware of middlewares) {
+    if (responseFinished()) {
+      const err = new Error('RESPONSE_SENT');
+      err.code = 'RESPONSE_SENT';
+      throw err;
+    }
 
-      if (index >= middlewares.length) return resolve();
+    await new Promise((resolve, reject) => {
+      let settled = false;
+      let nextCalled = false;
 
-      const middleware = middlewares[index++];
+      const finish = (err) => {
+        if (settled) return;
+        settled = true;
+        if (err) return reject(err);
+        resolve();
+      };
+
+      const next = (err) => {
+        nextCalled = true;
+        finish(err);
+      };
+
       try {
-        middleware(req, res, next);
-      } catch (error) {
-        reject(error);
-      }
-    };
+        const result = middleware(req, res, next);
+        if (result && typeof result.then === 'function') {
+          result.then(() => {
+            if (!nextCalled) finish();
+          }).catch(finish);
+          return;
+        }
 
-    next();
-  });
+        if (!nextCalled) {
+          finish();
+        }
+      } catch (error) {
+        finish(error);
+      }
+    });
+
+    if (responseFinished()) {
+      const err = new Error('RESPONSE_SENT');
+      err.code = 'RESPONSE_SENT';
+      throw err;
+    }
+  }
 }

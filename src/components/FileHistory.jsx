@@ -16,9 +16,18 @@ const FileHistory = () => {
 
   return (
     <div className="mt-8 w-full max-w-4xl mx-auto">
-      <button
+      <div
         className="w-full flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-t-lg hover:bg-gray-200 dark:hover:bg-dark-border transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsExpanded((prev) => !prev);
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isExpanded}
       >
         <div className="flex items-center gap-2">
           <svg
@@ -54,7 +63,7 @@ const FileHistory = () => {
             Clear All
           </button>
         )}
-      </button>
+      </div>
 
       {isExpanded && (
         <div className="border border-t-0 border-gray-200 dark:border-dark-border rounded-b-lg bg-white dark:bg-dark-surface overflow-hidden">

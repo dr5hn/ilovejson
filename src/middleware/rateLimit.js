@@ -23,11 +23,17 @@ export const rateLimit = (options = {}) => {
 
   return (req, res, next) => {
     // Get client IP address
-    const ip = req.headers['x-forwarded-for'] ||
-               req.headers['x-real-ip'] ||
-               req.connection?.remoteAddress ||
-               req.socket?.remoteAddress ||
-               'unknown';
+    const forwarded = req.headers['x-forwarded-for'];
+    const forwardedIp = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+    const rawIp = forwardedIp ||
+      req.headers['x-real-ip'] ||
+      req.socket?.remoteAddress ||
+      req.connection?.remoteAddress ||
+      'unknown';
+
+    const ip = rawIp.includes(',')
+      ? rawIp.split(',')[0].trim()
+      : rawIp.trim();
 
     const key = `ratelimit:${ip}`;
 

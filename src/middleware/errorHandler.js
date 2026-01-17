@@ -17,6 +17,10 @@ export const errorHandler = (handler) => {
     try {
       await handler(req, res);
     } catch (error) {
+      if (res.headersSent || res.writableEnded || error?.code === 'RESPONSE_SENT') {
+        return;
+      }
+
       // Log error to console in development
       if (process.env.NODE_ENV !== 'production') {
         console.error('API Error:', error);
