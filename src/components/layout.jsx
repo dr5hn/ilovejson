@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { utils } from '@constants/utils';
 import ThemeToggle from '@components/ThemeToggle';
+import AuthButton from '@components/AuthButton';
+import UserMenu from '@components/UserMenu';
 
 const Layout = ({
   children,
@@ -37,6 +39,8 @@ const Layout = ({
         </nav>
         <div className="lg:ml-4 flex items-center gap-3">
           <ThemeToggle />
+          <AuthButton />
+          <UserMenu />
           <Link href="https://github.com/ilovejson/ilovejson" className="flex items-center justify-start lg:mb-0 mb-4 pointer-cursor">
             <img className="rounded-full w-10 h-10 border-2 border-transparent hover:border-red-400 dark:invert" src="/images/github.png" alt="ilovejson" />
           </Link>

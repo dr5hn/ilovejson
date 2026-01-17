@@ -7,7 +7,9 @@
       "@utils/*": ["src/utils/*"],
       "@middleware/*": ["src/middleware/*"],
       "@contexts/*": ["src/contexts/*"],
-      "@hooks/*": ["src/hooks/*"]
+      "@hooks/*": ["src/hooks/*"],
+      "@lib/*": ["src/lib/*"],
+      "@generated/*": ["src/generated/*"]
     }
   }
 }

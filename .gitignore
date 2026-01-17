@@ -20,6 +20,9 @@ yarn.lock
 .env
 !.gitkeep
 
+# generated files
+/src/generated
+
 # debug
 npm-debug.log*
 

@@ -1,5 +1,6 @@
 import '../styles/index.css';
 import Head from 'next/head';
+import { SessionProvider } from 'next-auth/react';
 import { ThemeProvider } from '@contexts/ThemeContext';
 
 // Inline script to prevent FOUC (Flash of Unstyled Content)
@@ -20,7 +21,7 @@ const ThemeScript = () => {
   return <script dangerouslySetInnerHTML={{ __html: script }} />;
 };
 
-function MyApp({ Component, pageProps }) {
+function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   const og = pageProps.data?.og
   const title = pageProps.data?.title
 
@@ -57,9 +58,11 @@ function MyApp({ Component, pageProps }) {
       </Head>
 
       <ThemeScript />
-      <ThemeProvider>
-        <Component {...pageProps} />
-      </ThemeProvider>
+      <SessionProvider session={session}>
+        <ThemeProvider>
+          <Component {...pageProps} />
+        </ThemeProvider>
+      </SessionProvider>
     </>
   )
 }
