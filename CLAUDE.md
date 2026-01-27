@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-I ❤️ JSON is a Next.js web application that provides JSON conversion tools. It converts JSON to/from various formats: CSV, YAML, XML, PHP arrays, Markdown, HTML, and tables. The app uses a file upload interface with drag-and-drop support.
+I ❤️ JSON is a Next.js web application that provides JSON conversion and utility tools. It converts JSON to/from various formats (CSV, YAML, XML, PHP arrays, Markdown, HTML, TOML, SQL, TypeScript, Excel) and offers utilities (diff, merge, query, faker, validate, beautify, compress, viewer, generate schema). The app uses a file upload interface with drag-and-drop support and optional user authentication.
 
 ## Development Commands
 
@@ -27,6 +27,11 @@ yarn lint
 # Fix linting issues
 yarn lint:fix
 
+# Database commands (requires DATABASE_URL in .env)
+yarn prisma generate      # Generate Prisma client
+yarn prisma migrate dev   # Run migrations
+yarn prisma studio        # Open database GUI
+
 # Run with Docker
 docker-compose up
 ```
@@ -42,6 +47,10 @@ The project uses path aliases configured in `jsconfig.json`:
 - `@constants/*` → `src/constants/*`
 - `@utils/*` → `src/utils/*`
 - `@middleware/*` → `src/middleware/*`
+- `@contexts/*` → `src/contexts/*`
+- `@hooks/*` → `src/hooks/*`
+- `@lib/*` → `src/lib/*`
+- `@generated/*` → `src/generated/*` (Prisma client)
 
 Always use these aliases instead of relative imports.
 
@@ -125,16 +134,18 @@ The middleware system in `src/middleware/` provides composable request processin
 
 ### Tools Configuration
 
-The `@constants/tools` array defines all available conversion tools. Each tool has:
+**Conversion Tools** (`@constants/tools.jsx`): JSON to/from CSV, YAML, XML, PHP, Markdown, HTML, TOML, SQL, TypeScript, Excel. Each tool has:
 - `from`: Source format
 - `to`: Target format
 - `description`: Tool description for meta tags
 - `slug`: URL-friendly identifier (kebab-case)
 
+**Utility Tools** (`@constants/utils.jsx`): Compress, Beautify, Validate, Viewer, Editor, Repair, Generate Schema, Diff, Merge, Query, Faker. These have dedicated pages in `pages/` rather than using dynamic routing.
+
 When adding new conversion tools:
-1. Add entry to `@constants/tools`
+1. Add entry to `@constants/tools.jsx`
 2. Create API route in `pages/api/{from}to{to}.jsx`
-3. Add MIME type mapping in `@constants/mimetypes` if needed
+3. Add MIME type mapping in `@constants/mimetypes.jsx` if needed
 4. Follow the established middleware pattern
 
 ### Response Format
@@ -158,9 +169,19 @@ All API responses follow a consistent structure:
 }
 ```
 
+### Authentication (Optional)
+
+The app includes optional NextAuth.js authentication with OAuth providers (Google, GitHub, Microsoft). When configured:
+- User sessions track conversion history (`Conversion` model)
+- Users can save files (`SavedFile` model)
+- Prisma client is generated to `src/generated/prisma/`
+
+Setup requires: PostgreSQL database, `DATABASE_URL`, `NEXTAUTH_SECRET`, and at least one OAuth provider configured in `.env` (see `.env.example`).
+
 ## Requirements
 
 - Node.js v22.x or higher (enforced via package.json engines)
 - Yarn package manager
 - Uses Next.js 16 with React 19
 - Tailwind CSS 4.x for styling
+- PostgreSQL (optional, for authentication features)
