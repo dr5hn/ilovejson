@@ -22,7 +22,6 @@ export const config = {
 
 const yamlOptions = {
   indent: 4,
-  prettyErrors: true,
 };
 
 async function handler(req, res) {
@@ -36,7 +35,7 @@ async function handler(req, res) {
   // Core conversion logic
   const jsonRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
   const jsonData = JSON.parse(jsonRead);
-  const yaml = YAML.stringify(jsonData, yamlOptions);
+  const yaml = YAML.stringify(jsonData, null, yamlOptions);
 
   const modifiedDate = new Date().getTime();
   const outputFilePath = `${downloadDir}/${modifiedDate}.yml`;

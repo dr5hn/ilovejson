@@ -7,7 +7,6 @@ import { rateLimit } from '@middleware/rateLimit';
 import { parseFile } from '@middleware/fileParser';
 import { errorHandler } from '@middleware/errorHandler';
 const convert = require('xml-js');
-
 const fs = require('fs');
 initDirs();
 
@@ -15,139 +14,95 @@ const uploadDir = globals.uploadDir + '/xmltojson';
 const downloadDir = globals.downloadDir + '/xmltojson';
 
 export const config = {
-  api: {
-    bodyParser: false,
-  },
+  api: { bodyParser: false },
 };
 
 const jsonOptions = {
+  compact: false,
   ignoreComment: true,
   alwaysChildren: true,
-  compact: true,
-  spaces: 4
+  // ✅ removed spaces — only valid for json2xml, has no effect here
 };
 
-// Helper function to simplify xml-js output structure
-// Converts { _text: value } to just value, removes _declaration, root, and item wrappers
-function simplifyXmlJson(obj) {
-  if (obj === null || obj === undefined) {
-    return obj;
-  }
-
-  // If it's an array, process each element
-  if (Array.isArray(obj)) {
-    return obj.map(item => simplifyXmlJson(item));
-  }
-
-  // If it's not an object, return as is
-  if (typeof obj !== 'object') {
-    return obj;
-  }
-
-  const keys = Object.keys(obj);
-  
-  // Remove _declaration property (XML declaration)
-  if (keys.includes('_declaration')) {
-    // Continue processing without _declaration
-  }
-  
-  // If object has only _text property, return the value directly
-  if (keys.length === 1 && keys[0] === '_text') {
-    return simplifyXmlJson(obj._text);
-  }
-
-  // Process all properties recursively
-  const simplified = {};
-  for (const key in obj) {
-    // Skip _declaration
-    if (key === '_declaration') {
-      continue;
-    }
-    // Skip root wrapper - unwrap its contents
-    if (key === 'root') {
-      const rootContent = simplifyXmlJson(obj.root);
-      // If root contains item(s), unwrap them
-      if (rootContent && typeof rootContent === 'object' && !Array.isArray(rootContent)) {
-        if (rootContent.item) {
-          const itemContent = simplifyXmlJson(rootContent.item);
-          // If item is an array, return it directly; otherwise merge its properties
-          if (Array.isArray(itemContent)) {
-            return itemContent;
-          } else if (typeof itemContent === 'object' && itemContent !== null) {
-            // Merge item properties with any other root properties
-            const otherProps = { ...rootContent };
-            delete otherProps.item;
-            return { ...otherProps, ...itemContent };
-          } else {
-            return itemContent;
-          }
-        }
+// ✅ Cast any field whose value looks like a number (not hardcoded field names)
+function castTypes(arr) {
+  return arr.map(item => {
+    const casted = { ...item };
+    for (const key in casted) {
+      if (casted[key] !== undefined && casted[key] !== '') {
+        const num = Number(casted[key]);
+        if (!isNaN(num)) casted[key] = num;
       }
-      // If root doesn't have item, return its content directly
-      return rootContent;
     }
-    // Skip item wrapper - unwrap its contents
-    if (key === 'item') {
-      const itemContent = simplifyXmlJson(obj.item);
-      // If item is an array, return it directly
-      if (Array.isArray(itemContent)) {
-        return itemContent;
+    return casted;
+  });
+}
+
+// ✅ Rewritten to correctly handle compact: false element structure
+function simplifyXmlJson(node) {
+  if (!node) return null;
+
+  // Text node — return raw value
+  if (node.type === 'text') return node.text;
+
+  if (node.type === 'element') {
+    if (!node.elements || node.elements.length === 0) return null;
+
+    // Single text child — return value directly
+    if (node.elements.length === 1 && node.elements[0].type === 'text') {
+      return node.elements[0].text;
+    }
+
+    // Group child elements by name
+    const result = {};
+    for (const child of node.elements) {
+      const key = child.name;
+      const val = simplifyXmlJson(child);
+      if (result[key] !== undefined) {
+        if (!Array.isArray(result[key])) result[key] = [result[key]];
+        result[key].push(val);
+      } else {
+        result[key] = val;
       }
-      // Otherwise, merge item properties with other properties
-      const itemObj = typeof itemContent === 'object' && itemContent !== null ? itemContent : {};
-      Object.assign(simplified, itemObj);
-      continue;
     }
-    if (key === '_text') {
-      // Skip _text for now, we'll handle it after processing other keys
-      continue;
-    } else if (key === '_attributes') {
-      // Merge attributes into the simplified object
-      if (obj._attributes && typeof obj._attributes === 'object') {
-        Object.assign(simplified, obj._attributes);
-      }
-    } else {
-      // Recursively process other properties
-      simplified[key] = simplifyXmlJson(obj[key]);
-    }
+
+    // Merge attributes if present
+    if (node.attributes) Object.assign(result, node.attributes);
+    return result;
   }
 
-  // Handle _text after processing other properties
-  if (keys.includes('_text')) {
-    const textValue = simplifyXmlJson(obj._text);
-    // If there are no other properties (except possibly _attributes), use text value directly
-    const hasOtherProps = keys.some(k => k !== '_text' && k !== '_attributes' && k !== '_declaration');
-    if (!hasOtherProps) {
-      // Only _text (and possibly _attributes), return text value
-      return textValue;
-    }
-    // There are other properties, keep _text in the object
-    simplified._text = textValue;
+  // Root document node — find first element child
+  if (node.elements) {
+    const rootEl = node.elements.find(e => e.type === 'element');
+    return rootEl ? simplifyXmlJson(rootEl) : null;
   }
 
-  return simplified;
+  return null;
 }
 
 async function handler(req, res) {
-  // Run all middleware
   await runMiddleware(req, res, [
     validateMethod(['POST']),
     rateLimit({ maxRequests: 20, windowMs: 60000 }),
-    parseFile(uploadDir, { maxFileSize: 104857600 }), // 100MB
+    parseFile(uploadDir, { maxFileSize: 104857600 }),
   ]);
 
-  // Core conversion logic
+  // ✅ Guard against missing file
+  if (!req.uploadedFile?.path) {
+    return res.status(400).json({ error: 'No file uploaded.' });
+  }
+
   const xmlRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
+  const jsonObj = JSON.parse(convert.xml2json(xmlRead, jsonOptions));
 
-  // Convert XML to JSON
-  const jsonString = convert.xml2json(xmlRead, jsonOptions);
-  const jsonObj = JSON.parse(jsonString);
-
-  // Simplify the structure (remove _text wrappers)
   const simplifiedJson = simplifyXmlJson(jsonObj);
 
-  // Convert back to formatted JSON string
-  const jsonContent = JSON.stringify(simplifiedJson, null, 4);
+  // ✅ Apply castTypes to array results
+  const finalJson = Array.isArray(simplifiedJson)
+    ? castTypes(simplifiedJson)
+    : simplifiedJson;
+
+  const jsonContent = JSON.stringify(finalJson, null, 4);
 
   const modifiedDate = new Date().getTime();
   const outputFilePath = `${downloadDir}/${modifiedDate}.json`;

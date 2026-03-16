@@ -36,11 +36,11 @@ async function handler(req, res) {
 
   // Core conversion logic
   const csvRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
-  const json = csv2json(csvRead, options);
+  const json = await csv2json(csvRead, options);
 
   const modifiedDate = new Date().getTime();
   const outputFilePath = `${downloadDir}/${modifiedDate}.json`;
-  fs.writeFileSync(outputFilePath, JSON.stringify(json, undefined, 4), 'utf8');
+  fs.writeFileSync(outputFilePath, JSON.stringify(json, null, 4), 'utf8');
 
   const toPath = outputFilePath.replace('public/', '');
 

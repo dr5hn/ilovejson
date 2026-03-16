@@ -17,9 +17,8 @@ export const config = {
   api: {
     bodyParser: false,
   },
-}
+};
 
-// Helper function to escape HTML
 function escapeHtml(text) {
   if (text === null || text === undefined) return '';
   const map = {
@@ -27,12 +26,11 @@ function escapeHtml(text) {
     '<': '&lt;',
     '>': '&gt;',
     '"': '&quot;',
-    "'": '&#039;'
+    "'": '&#039;',
   };
-  return String(text).replace(/[&<>"']/g, m => map[m]);
+  return String(text).replace(/[&<>"']/g, (m) => map[m]);
 }
 
-// Helper function to format value for display
 function formatValue(value) {
   if (value === null) return 'null';
   if (value === undefined) return 'undefined';
@@ -42,38 +40,38 @@ function formatValue(value) {
   return escapeHtml(String(value));
 }
 
-// Helper function to convert JSON to HTML table
 function jsonToHtmlTable(data) {
   let html = '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">\n';
-  
+
   if (Array.isArray(data) && data.length > 0) {
-    // Array of objects
     if (typeof data[0] === 'object' && data[0] !== null && !Array.isArray(data[0])) {
-      const keys = Object.keys(data[0]);
+      // ✅ Collect all unique keys across all rows, not just data[0]
+      const keys = [...new Set(data.flatMap((item) => Object.keys(item)))];
+
       html += '  <thead>\n    <tr>\n';
-      keys.forEach(key => {
+      keys.forEach((key) => {
         html += `      <th style="background-color: #f2f2f2; font-weight: bold; padding: 8px;">${escapeHtml(String(key))}</th>\n`;
       });
       html += '    </tr>\n  </thead>\n  <tbody>\n';
-      
-      data.forEach((item, index) => {
-        const rowClass = index % 2 === 0 ? 'style="background-color: #f9f9f9;"' : '';
-        html += `    <tr ${rowClass}>\n`;
-        keys.forEach(key => {
+
+      data.forEach((item) => {
+        // ✅ Removed inline rowClass — CSS nth-child handles alternating rows
+        html += `    <tr>\n`;
+        keys.forEach((key) => {
           html += `      <td style="padding: 8px;">${formatValue(item[key])}</td>\n`;
         });
         html += '    </tr>\n';
       });
-      
+
       html += '  </tbody>\n';
     } else {
       // Array of primitives
       html += '  <thead>\n    <tr>\n';
       html += '      <th style="background-color: #f2f2f2; font-weight: bold; padding: 8px;">Value</th>\n';
       html += '    </tr>\n  </thead>\n  <tbody>\n';
-      data.forEach((item, index) => {
-        const rowClass = index % 2 === 0 ? 'style="background-color: #f9f9f9;"' : '';
-        html += `    <tr ${rowClass}>\n`;
+      data.forEach((item) => {
+        // ✅ Removed inline rowClass
+        html += `    <tr>\n`;
         html += `      <td style="padding: 8px;">${formatValue(item)}</td>\n`;
         html += '    </tr>\n';
       });
@@ -83,9 +81,9 @@ function jsonToHtmlTable(data) {
     // Single object - key-value table
     html += '  <tbody>\n';
     const entries = Object.entries(data);
-    entries.forEach(([key, value], index) => {
-      const rowClass = index % 2 === 0 ? 'style="background-color: #f9f9f9;"' : '';
-      html += `    <tr ${rowClass}>\n`;
+    entries.forEach(([key, value]) => {
+      // ✅ Removed inline rowClass
+      html += `    <tr>\n`;
       html += `      <th style="background-color: #f2f2f2; font-weight: bold; padding: 8px; text-align: left;">${escapeHtml(String(key))}</th>\n`;
       html += `      <td style="padding: 8px;">${formatValue(value)}</td>\n`;
       html += '    </tr>\n';
@@ -99,24 +97,27 @@ function jsonToHtmlTable(data) {
     html += '    </tr>\n';
     html += '  </tbody>\n';
   }
-  
+
   html += '</table>';
   return html;
 }
 
-
 async function handler(req, res) {
-  // Run all middleware
   await runMiddleware(req, res, [
     validateMethod(['POST']),
     rateLimit({ maxRequests: 20, windowMs: 60000 }),
-    parseFile(uploadDir, { maxFileSize: 104857600 }), // 100MB
+    parseFile(uploadDir, { maxFileSize: 104857600 }),
   ]);
 
-  // Core conversion logic
+  // ✅ Guard against missing file
+  if (!req.uploadedFile?.path) {
+    return res.status(400).json({ error: 'No file uploaded.' });
+  }
+
   const jsonRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
   const jsonData = JSON.parse(jsonRead);
   const tableHtml = jsonToHtmlTable(jsonData);
+
   const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -170,7 +171,7 @@ async function handler(req, res) {
   </div>
 </body>
 </html>`;
-      
+
   const modifiedDate = new Date().getTime();
   const outputFilePath = `${downloadDir}/${modifiedDate}.html`;
   fs.writeFileSync(outputFilePath, htmlContent, 'utf8');

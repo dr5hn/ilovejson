@@ -62,10 +62,19 @@ async function handler(req, res) {
     parseFile(uploadDir, { maxFileSize: 104857600 }),
   ]);
 
+  // ✅ Guard against missing file
+  if (!req.uploadedFile?.path) {
+    return ReE(res, 'No file uploaded.', 400);
+  }
+
   const jsonRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
   const jsonData = JSON.parse(jsonRead);
 
-  const tableName = req.uploadedFile.fields?.tableName || 'data';
+  // ✅ Fix fields lookup — check req.body/req.fields, not req.uploadedFile.fields
+  // ✅ Sanitize tableName to prevent SQL injection
+  const rawName = req.body?.tableName || req.fields?.tableName || 'data';
+  const tableName = rawName.replace(/[^a-zA-Z0-9_]/g, '_');
+
   const sqlOutput = jsonToSQL(jsonData, tableName);
 
   const modifiedDate = new Date().getTime();

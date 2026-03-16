@@ -27,8 +27,20 @@ async function handler(req, res) {
     parseFile(uploadDir, { maxFileSize: 104857600 }),
   ]);
 
+  // ✅ Guard against missing file
+  if (!req.uploadedFile?.path) {
+    return res.status(400).json({ error: 'No file uploaded.' });
+  }
+
   const tomlRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
-  const jsonData = TOML.parse(tomlRead);
+
+  // ✅ Handle invalid TOML gracefully
+  let jsonData;
+  try {
+    jsonData = TOML.parse(tomlRead);
+  } catch (err) {
+    return res.status(422).json({ error: `Invalid TOML file: ${err.message}` });
+  }
 
   const jsonOutput = JSON.stringify(jsonData, null, 2);
 

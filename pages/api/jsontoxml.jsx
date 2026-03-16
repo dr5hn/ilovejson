@@ -21,10 +21,48 @@ export const config = {
 };
 
 const xmlOptions = {
-  compact: true, // BUGGY
-  ignoreComment: false,
-  spaces: 2
+  compact: false,
+  spaces: 2,
 };
+
+function buildValue(val) {
+  if (Array.isArray(val)) {
+    return val.map(item =>
+      typeof item === 'object' && item !== null
+        ? { type: 'element', name: 'item', elements: buildChildren(item) }
+        : { type: 'element', name: 'item', elements: [{ type: 'text', text: String(item) }] }
+    );
+  }
+  if (typeof val === 'object' && val !== null) {
+    return buildChildren(val);
+  }
+  return [{ type: 'text', text: String(val) }];
+}
+
+function buildChildren(obj) {
+  return Object.entries(obj).map(([key, val]) => ({
+    type: 'element',
+    name: key,
+    elements: buildValue(val),
+  }));
+}
+
+function buildElements(jsonData) {
+  const items = Array.isArray(jsonData) ? jsonData : [jsonData];
+  return {
+    elements: [
+      {
+        type: 'element',
+        name: 'root',
+        elements: items.map(item => ({
+          type: 'element',
+          name: 'item',
+          elements: buildChildren(item), // ✅ uses recursive helper
+        })),
+      },
+    ],
+  };
+}
 
 async function handler(req, res) {
   // Run all middleware
@@ -34,21 +72,22 @@ async function handler(req, res) {
     parseFile(uploadDir, { maxFileSize: 104857600 }), // 100MB
   ]);
 
+  // ✅ Guard against missing file
+  if (!req.uploadedFile?.path) {
+    return res.status(400).json({ error: 'No file uploaded.' });
+  }
+
   // Core conversion logic
   const jsonRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
   const jsonData = JSON.parse(jsonRead);
 
-  // Prepare data structure for XML conversion
-  let dataToConvert;
-  if (Array.isArray(jsonData)) {
-    // For arrays, create root with multiple item elements
-    dataToConvert = { root: { item: jsonData } };
-  } else {
-    // For single object, wrap in root with single item
-    dataToConvert = { root: { item: [jsonData] } };
+  // ✅ Guard against non-object JSON
+  if (typeof jsonData !== 'object' || jsonData === null) {
+    return res.status(400).json({ error: 'JSON must be an object or array.' });
   }
 
-  let xmlOp = convert.json2xml(JSON.stringify(dataToConvert), xmlOptions);
+  const dataToConvert = buildElements(jsonData);
+  let xmlOp = convert.json2xml(dataToConvert, xmlOptions);
 
   // Add XML declaration
   xmlOp = '<?xml version="1.0" encoding="UTF-8"?>\n\n' + xmlOp;

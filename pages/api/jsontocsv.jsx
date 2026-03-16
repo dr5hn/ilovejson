@@ -39,7 +39,7 @@ async function handler(req, res) {
   const jsonRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
   const jsonData = JSON.parse(jsonRead); // Error handler will catch invalid JSON
 
-  const csv = json2csv(jsonData, options);
+  const csv = await json2csv(jsonData, options);
 
   const modifiedDate = new Date().getTime();
   const outputFilePath = `${downloadDir}/${modifiedDate}.csv`;

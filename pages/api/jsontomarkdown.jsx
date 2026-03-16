@@ -1,6 +1,6 @@
 import { initDirs } from '@utils/initdir';
 import { globals } from '@constants/globals';
-import { ReS } from '@utils/reusables';
+import { ReS, ReE } from '@utils/reusables';
 import { runMiddleware } from '@middleware/apiMiddleware';
 import { validateMethod } from '@middleware/methodValidation';
 import { rateLimit } from '@middleware/rateLimit';
@@ -17,18 +17,23 @@ export const config = {
   api: {
     bodyParser: false,
   },
-}
+};
 
-// Helper function to convert JSON to Markdown table
 function jsonToMarkdown(data) {
+  // Handle empty array explicitly
+  if (Array.isArray(data) && data.length === 0) {
+    return '_No data available._';
+  }
+
   if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object' && data[0] !== null) {
     // Array of objects - create table
-    const keys = Object.keys(data[0]);
+    // ✅ Collect all unique keys across all rows, not just data[0]
+    const keys = [...new Set(data.flatMap(item => Object.keys(item)))];
     let markdown = '| ' + keys.join(' | ') + ' |\n';
     markdown += '| ' + keys.map(() => '---').join(' | ') + ' |\n';
-    
-    data.forEach(item => {
-      const values = keys.map(key => {
+
+    data.forEach((item) => {
+      const values = keys.map((key) => {
         const value = item[key];
         if (value === null || value === undefined) return '';
         if (typeof value === 'object') return JSON.stringify(value).replace(/\|/g, '\\|');
@@ -36,12 +41,15 @@ function jsonToMarkdown(data) {
       });
       markdown += '| ' + values.join(' | ') + ' |\n';
     });
-    
+
     return markdown;
   } else if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
     // Single object - create key-value list or table
     const entries = Object.entries(data);
-    if (entries.length > 0 && entries.every(([_, v]) => typeof v !== 'object' || v === null || Array.isArray(v))) {
+    if (
+      entries.length > 0 &&
+      entries.every(([_, v]) => typeof v !== 'object' || v === null || Array.isArray(v))
+    ) {
       // Simple key-value pairs - use table
       let markdown = '| Key | Value |\n';
       markdown += '| --- | --- |\n';
@@ -75,7 +83,7 @@ function jsonToMarkdown(data) {
     // Array of primitives
     let markdown = '| Value |\n';
     markdown += '| --- |\n';
-    data.forEach(item => {
+    data.forEach((item) => {
       const value = typeof item === 'object' ? JSON.stringify(item) : String(item);
       markdown += `| ${value.replace(/\|/g, '\\|')} |\n`;
     });
@@ -87,16 +95,25 @@ function jsonToMarkdown(data) {
 }
 
 async function handler(req, res) {
-  // Run all middleware
   await runMiddleware(req, res, [
     validateMethod(['POST']),
     rateLimit({ maxRequests: 20, windowMs: 60000 }),
-    parseFile(uploadDir, { maxFileSize: 104857600 }), // 100MB
+    parseFile(uploadDir, { maxFileSize: 104857600 }),
   ]);
 
-  // Core conversion logic
-  const jsonRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
-  const jsonData = JSON.parse(jsonRead);
+  // ✅ Guard against missing file
+  if (!req.uploadedFile?.path) {
+    return ReE(res, 'No file uploaded.', 400);
+  }
+
+  let jsonData;
+  try {
+    const jsonRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
+    jsonData = JSON.parse(jsonRead);
+  } catch (err) {
+    return ReE(res, 'Invalid JSON file. Please upload a valid JSON file.', 422);
+  }
+
   const markdownContent = jsonToMarkdown(jsonData);
 
   const modifiedDate = new Date().getTime();
@@ -112,4 +129,3 @@ async function handler(req, res) {
 }
 
 export default errorHandler(handler);
-

@@ -20,8 +20,7 @@ export const config = {
   },
 };
 
-const yamlOptions = {
-  indent: 4,
+const yamlParseOptions = {
   prettyErrors: true,
 };
 
@@ -35,11 +34,11 @@ async function handler(req, res) {
 
   // Core conversion logic
   const yamlRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
-  const yamlContent = await YAML.parse(yamlRead, yamlOptions);
+  const yamlContent = await YAML.parse(yamlRead, yamlParseOptions);
 
   const modifiedDate = new Date().getTime();
   const outputFilePath = `${downloadDir}/${modifiedDate}.json`;
-  fs.writeFileSync(outputFilePath, JSON.stringify(yamlContent, undefined, 4), 'utf8');
+  fs.writeFileSync(outputFilePath, JSON.stringify(yamlContent, null, 4), 'utf8');
 
   const toPath = outputFilePath.replace('public/', '');
 

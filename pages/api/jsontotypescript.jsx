@@ -27,10 +27,21 @@ async function handler(req, res) {
     parseFile(uploadDir, { maxFileSize: 104857600 }),
   ]);
 
+  // ✅ Guard against missing file
+  if (!req.uploadedFile?.path) {
+    return res.status(400).json({ error: 'No file uploaded.' });
+  }
+
   const jsonRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
   const jsonData = JSON.parse(jsonRead);
 
-  const rootName = req.uploadedFile.fields?.rootName || 'RootObject';
+  // ✅ Validate input type
+  if (typeof jsonData !== 'object' || jsonData === null) {
+    return res.status(400).json({ error: 'JSON must be an object or array.' });
+  }
+
+  // ✅ Fix fields lookup — check req.body/req.fields, not req.uploadedFile.fields
+  const rootName = req.body?.rootName || req.fields?.rootName || 'RootObject';
   const tsInterfaces = JsonToTS(jsonData, { rootName });
   const tsOutput = tsInterfaces.join('\n\n');
 

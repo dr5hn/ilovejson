@@ -39,28 +39,35 @@ function mapTSTypeToJSON(tsType) {
   return tsType;
 }
 
+// ✅ Rewritten to use brace-counting instead of [^}]+ regex
+// Fixes failure on interfaces with nested objects/braces
 function parseTypeScriptInterfaces(tsContent) {
   const interfaces = {};
-
-  const interfaceRegex = /interface\s+(\w+)\s*\{([^}]+)\}/g;
+  const interfaceRegex = /interface\s+(\w+)\s*\{/g;
 
   let match;
   while ((match = interfaceRegex.exec(tsContent)) !== null) {
     const name = match[1];
-    const body = match[2];
+    let depth = 1;
+    let i = interfaceRegex.lastIndex;
+    let body = '';
+
+    // Walk characters counting braces to find true end of interface
+    while (i < tsContent.length && depth > 0) {
+      const ch = tsContent[i];
+      if (ch === '{') depth++;
+      else if (ch === '}') depth--;
+      if (depth > 0) body += ch;
+      i++;
+    }
 
     const properties = {};
     const propRegex = /(\w+)(\?)?:\s*([^;]+);/g;
-
     let propMatch;
     while ((propMatch = propRegex.exec(body)) !== null) {
-      const propName = propMatch[1];
-      const isOptional = !!propMatch[2];
-      const propType = propMatch[3].trim();
-
-      properties[propName] = {
-        type: mapTSTypeToJSON(propType),
-        optional: isOptional,
+      properties[propMatch[1]] = {
+        type: mapTSTypeToJSON(propMatch[3].trim()),
+        optional: !!propMatch[2],
       };
     }
 
@@ -76,6 +83,11 @@ async function handler(req, res) {
     rateLimit({ maxRequests: 20, windowMs: 60000 }),
     parseFile(uploadDir, { maxFileSize: 104857600 }),
   ]);
+
+  // ✅ Guard against missing file
+  if (!req.uploadedFile?.path) {
+    return res.status(400).json({ error: 'No file uploaded.' });
+  }
 
   const tsRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
   const interfaces = parseTypeScriptInterfaces(tsRead);

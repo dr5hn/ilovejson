@@ -27,6 +27,11 @@ async function handler(req, res) {
     parseFile(uploadDir, { maxFileSize: 104857600 }),
   ]);
 
+  // ✅ Guard against missing file
+  if (!req.uploadedFile?.path) {
+    return res.status(400).json({ error: 'No file uploaded.' });
+  }
+
   const jsonRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
   let jsonData = JSON.parse(jsonRead);
 
@@ -34,15 +39,26 @@ async function handler(req, res) {
     jsonData = [jsonData];
   }
 
-  const workbook = XLSX.utils.book_new();
-  const worksheet = XLSX.utils.json_to_sheet(jsonData);
+  // ✅ Pre-serialize nested objects — prevents [object Object] in cells
+  const flatData = jsonData.map(row => {
+    const flat = {};
+    for (const [key, val] of Object.entries(row)) {
+      flat[key] = typeof val === 'object' && val !== null ? JSON.stringify(val) : val;
+    }
+    return flat;
+  });
 
-  const sheetName = req.uploadedFile.fields?.sheetName || 'Sheet1';
+  const workbook = XLSX.utils.book_new();
+  const worksheet = XLSX.utils.json_to_sheet(flatData);
+
+  // ✅ Fix fields lookup + sanitize sheet name for Excel rules (max 31 chars, no special chars)
+  const rawSheet = req.body?.sheetName || req.fields?.sheetName || 'Sheet1';
+  const sheetName = rawSheet.replace(/[\\\/\?\*\[\]:]/g, '').substring(0, 31) || 'Sheet1';
+
   XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
   const modifiedDate = new Date().getTime();
   const outputFilePath = `${downloadDir}/${modifiedDate}.xlsx`;
-
   XLSX.writeFile(workbook, outputFilePath);
 
   const toPath = outputFilePath.replace('public/', '');
