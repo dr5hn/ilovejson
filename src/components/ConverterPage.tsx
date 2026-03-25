@@ -1,16 +1,16 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback } from "react"
 import { useDropzone } from "react-dropzone"
 import Layout from "@components/layout"
 import AlertError from "@components/error"
 import FileHistory from "@components/FileHistory"
-import { ConversionLoader, LargeFileIndicator } from "@components/LoadingState"
+import { LargeFileIndicator } from "@components/LoadingState"
 import { globals } from "@constants/globals"
 import { postFileWithProgress } from "@utils/requests"
 import { useKeyboardShortcuts } from "@hooks/useKeyboardShortcuts"
 import { useFileHistory } from "@hooks/useFileHistory"
-import { Upload, ArrowRight, Download, RefreshCcw, Check, FileText, Sparkles } from "lucide-react"
+import { Upload, ArrowRight, Download, RefreshCcw, Check, FileText, Sparkles, Zap, Lock, BadgeCheck } from "lucide-react"
 
 interface ConverterPageProps {
   slug: string
@@ -21,6 +21,8 @@ interface ConverterPageProps {
   fromColor: string
   toColor: string
   mimeType: Record<string, string[]>
+  sampleInput?: string
+  sampleOutput?: string
 }
 
 export function ConverterPage({
@@ -32,6 +34,8 @@ export function ConverterPage({
   fromColor,
   toColor,
   mimeType,
+  sampleInput = `{\n  "name": "John Doe",\n  "email": "john@example.com",\n  "age": 30\n}`,
+  sampleOutput = `name,email,age\nJohn Doe,john@example.com,30`,
 }: ConverterPageProps) {
   const api = slug?.replace(/-/g, "")
   const fileType = slug?.split("-")
@@ -87,6 +91,8 @@ export function ConverterPage({
             setProcessingStage("Complete!")
           }
         }
+
+
 
         const response = await postFileWithProgress(`api/${api}`, formData, isLargeFile ? handleProgress : undefined)
 
@@ -180,38 +186,40 @@ export function ConverterPage({
   const isLargeFile = selectedFile && selectedFile.size > largeFileThreshold
   const selectedFileSizeMB = selectedFile ? selectedFile.size / 1048576 : 0
 
-  // Determine current status
   const status = loading ? "loading" : converted ? "converted" : acceptedFiles.length > 0 ? "ready" : "idle"
 
   return (
     <Layout>
       <div className="flex-1 flex flex-col">
-        {/* Title Section */}
-        <div className="text-center py-6 border-b border-border bg-muted/20">
-          <div className="flex items-center justify-center gap-3 mb-2">
+
+        {/* ── HEADER (from ConverterSection) ── */}
+        <div className="text-center py-10 border-b border-border bg-muted/20">
+          <h1 className="text-2xl md:text-3xl font-bold text-balance mb-3 capitalize">
+  {title}
+</h1>
+          <p className="text-lg text-muted-foreground text-balance">{description}</p>
+          <div className="flex items-center justify-center gap-4 mt-6">
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-xs shadow-lg"
+              className="px-6 py-3 rounded-xl font-bold text-white text-sm shadow-lg"
               style={{ backgroundColor: fromColor }}
             >
               {fromFormat}
             </div>
-            <ArrowRight className="w-5 h-5 text-muted-foreground" />
+            <ArrowRight className="w-6 h-6 text-muted-foreground" />
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-xs shadow-lg"
+              className="px-6 py-3 rounded-xl font-bold text-white text-sm shadow-lg"
               style={{ backgroundColor: toColor }}
             >
               {toFormat}
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-foreground capitalize">{title}</h1>
-          <p className="text-muted-foreground text-sm">{description}</p>
         </div>
 
-        {/* Full Screen Editor/Upload Area */}
-        <div className="flex-1 flex items-center justify-center p-8">
+        {/* ── DROP ZONE (full width, from ConverterPage) ── */}
+        <div className="flex-1 flex py-14">
           <div
             {...getRootProps({
-              className: `w-full max-w-4xl rounded-3xl border-2 border-dashed p-12 transition-all duration-300 cursor-pointer ${
+              className: `w-full rounded-3xl border-2 border-dashed transition-all duration-300 cursor-pointer flex items-center justify-center ${
                 isDragActive || isDragAccept
                   ? "border-red-400 bg-red-50 dark:bg-red-950/30 scale-[1.01]"
                   : showError || isDragReject
@@ -222,27 +230,29 @@ export function ConverterPage({
           >
             <input {...getInputProps()} />
 
+            {/* IDLE */}
             {status === "idle" && !isFileTooLarge && (
-              <div className="text-center">
+              <div className="text-center py-14 px-60">
                 <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-muted to-muted/50 rounded-3xl flex items-center justify-center">
                   <FileText className="w-12 h-12 text-muted-foreground/50" />
                 </div>
                 <h3 className="text-2xl font-semibold text-foreground mb-2">
                   {isDragActive ? "Drop it here!" : `Drop your ${fromFormat} file here`}
                 </h3>
-                <p className="text-muted-foreground mb-8">or click to browse from your computer</p>
-                <div className="inline-flex items-center gap-2 px-10 py-5 bg-gradient-to-r from-red-500 to-rose-600 text-white font-semibold rounded-2xl cursor-pointer transition-all shadow-xl shadow-red-500/25 hover:shadow-red-500/40 hover:-translate-y-0.5 text-lg">
-                  <Upload className="w-6 h-6" />
+                <p className="text-muted-foreground mb-10">or click to browse from your computer</p>
+                <div className="inline-flex items-center gap-3 px-16 py-6 bg-gradient-to-r from-red-500 to-rose-600 text-white font-semibold rounded-2xl cursor-pointer transition-all shadow-xl shadow-red-500/25 hover:shadow-red-500/40 hover:-translate-y-0.5 text-xl">
+                  <Upload className="w-7 h-7" />
                   Select {fromFormat} file
                 </div>
                 <p className="text-sm text-muted-foreground mt-6">
-                  Maximum file size: 100MB
+                  Maximum file size: 100MB - Files auto-delete after 2 minutes
                 </p>
               </div>
             )}
 
+            {/* FILE TOO LARGE */}
             {isFileTooLarge && (
-              <div className="text-center">
+              <div className="text-center py-16">
                 <div className="w-24 h-24 mx-auto mb-6 bg-red-100 dark:bg-red-950 rounded-3xl flex items-center justify-center">
                   <span className="text-red-500 text-4xl">!</span>
                 </div>
@@ -251,8 +261,9 @@ export function ConverterPage({
               </div>
             )}
 
+            {/* READY */}
             {status === "ready" && (
-              <div className="text-center">
+              <div className="text-center py-16">
                 <div
                   className="w-24 h-24 mx-auto mb-6 rounded-3xl flex items-center justify-center text-white font-bold text-lg shadow-xl"
                   style={{ backgroundColor: fromColor }}
@@ -260,30 +271,26 @@ export function ConverterPage({
                   {fromFormat}
                 </div>
                 <h3 className="text-2xl font-semibold text-foreground mb-2">{selectedFile?.name}</h3>
-                <p className="flex items-center justify-center gap-2 text-base mb-4">
+                <p className="flex items-center justify-center gap-2 text-base mb-6">
                   <span className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center">
                     <Check className="w-4 h-4 text-emerald-600" />
                   </span>
                   <span className="text-muted-foreground">Ready to convert</span>
                 </p>
-
                 {isLargeFile && <LargeFileIndicator sizeMB={selectedFileSizeMB} />}
-
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleSubmit()
-                  }}
-                  className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-semibold rounded-2xl transition-all shadow-xl shadow-red-500/25 hover:shadow-red-500/40 hover:-translate-y-0.5 text-lg mt-4"
+                  onClick={(e) => { e.stopPropagation(); handleSubmit() }}
+                  className="inline-flex items-center gap-3 px-16 py-6 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-semibold rounded-2xl transition-all shadow-xl shadow-red-500/25 hover:shadow-red-500/40 hover:-translate-y-0.5 text-xl mt-4"
                 >
                   Convert to {toFormat}
-                  <ArrowRight className="w-6 h-6" />
+                  <ArrowRight className="w-7 h-7" />
                 </button>
               </div>
             )}
 
+            {/* LOADING */}
             {status === "loading" && (
-              <div className="text-center">
+              <div className="text-center py-16">
                 <div className="w-24 h-24 mx-auto mb-6 rounded-3xl flex items-center justify-center bg-muted">
                   <div className="w-12 h-12 border-4 border-muted-foreground/30 border-t-red-500 rounded-full animate-spin" />
                 </div>
@@ -300,8 +307,9 @@ export function ConverterPage({
               </div>
             )}
 
+            {/* CONVERTED */}
             {status === "converted" && (
-              <div className="text-center">
+              <div className="text-center py-16">
                 <div className="relative w-24 h-24 mx-auto mb-6">
                   <div
                     className="w-24 h-24 rounded-3xl flex items-center justify-center text-white font-bold text-lg shadow-xl"
@@ -319,20 +327,17 @@ export function ConverterPage({
                   Your {toFormat} file is ready to download
                 </p>
                 <div className="flex flex-col items-center gap-4">
-                  <a
+<a
                     href={downloadLink}
                     download={downloadFilename}
-                    className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold rounded-2xl transition-all shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 text-lg"
+                    className="inline-flex items-center gap-3 px-16 py-6 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold rounded-2xl transition-all shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 text-xl"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <Download className="w-6 h-6" />
+                    <Download className="w-7 h-7" />
                     Download {toFormat}
                   </a>
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleReset()
-                    }}
+                    onClick={(e) => { e.stopPropagation(); handleReset() }}
                     className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground font-medium transition-colors"
                   >
                     <RefreshCcw className="w-5 h-5" />
@@ -341,16 +346,18 @@ export function ConverterPage({
                 </div>
               </div>
             )}
+
           </div>
         </div>
 
-        {/* Error Display */}
+        {/* ── ERROR ── */}
         <AlertError message={errorMessage} showError={showError} />
 
-        {/* File History */}
-        <div className="max-w-4xl mx-auto w-full px-4 pb-8">
+        {/* ── FILE HISTORY ── */}
+        <div className="px-4 pb-8">
           <FileHistory />
         </div>
+
       </div>
     </Layout>
   )

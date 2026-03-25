@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
 import { useState, useCallback } from "react"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
-import { Button } from "@/components/ui/button"
+import { Header } from "@components/Header"
+import { Footer } from "@components/Footer"
+import { Button } from "@components/ui/button"
 import { Copy, Download, Trash2, Wand2, CheckCircle, Code, FileJson } from "lucide-react"
 
 export default function EditorPage() {

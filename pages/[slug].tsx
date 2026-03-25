@@ -23,7 +23,7 @@ const SlugPage = ({ slug, tool }: SlugPageProps) => {
   return (
     <ConverterPage
       slug={slug}
-      title={slug?.replace(/-/g, ' ')}
+      title={slug?.replace(/-/g, ' ').toUpperCase()}
       description={tool?.description || `Convert ${tool?.from} to ${tool?.to}`}
       fromFormat={formatLabels[fromFormat] || fromFormat.toUpperCase()}
       toFormat={formatLabels[toFormat] || toFormat.toUpperCase()}
