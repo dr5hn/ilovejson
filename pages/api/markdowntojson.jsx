@@ -1,9 +1,14 @@
-import { IncomingForm } from 'formidable';
 import { initDirs } from '@utils/initdir';
 import { globals } from '@constants/globals';
-import { ReE, ReS } from '@utils/reusables';
+import { ReS, ReE } from '@utils/reusables';
+import { runMiddleware } from '@middleware/apiMiddleware';
+import { validateMethod } from '@middleware/methodValidation';
+import { rateLimit } from '@middleware/rateLimit';
+import { parseFile } from '@middleware/fileParser';
+import { errorHandler } from '@middleware/errorHandler';
+import { getToolLimits } from '@constants/limits';
 
-const fs = require('fs');
+import fs from 'fs';
 initDirs();
 
 const uploadDir = globals.uploadDir + '/markdowntojson';
@@ -13,9 +18,55 @@ export const config = {
   api: {
     bodyParser: false,
   },
+};
+
+function isSeparatorLine(line) {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) return false;
+  const cells = trimmed.split('|').map((c) => c.trim()).filter((c) => c);
+  return cells.length > 0 && cells.every((c) => /^[-:\s]+$/.test(c));
 }
 
-// Helper function to parse Markdown and convert to JSON
+function isSeparatorRow(row) {
+  const values = Object.values(row);
+  return values.length > 0 && values.every((v) => /^-+$/.test(String(v).trim()));
+}
+
+function parseValue(value) {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  if (value === 'null' || value === '') return null;
+  if (!isNaN(value) && value !== '') {
+    const num = Number(value);
+    if (!isNaN(num)) return num;
+  }
+  try {
+    return JSON.parse(value);
+  } catch (e) {
+    return value.replace(/\\\|/g, '|').replace(/<br>/g, '\n');
+  }
+}
+
+// ✅ Helper to flush a completed table into the right place
+function flushTable(currentTable, lastHeading, result, currentObject) {
+  if (!currentTable) return;
+  if (lastHeading) {
+    // Group table under its heading
+    if (Array.isArray(currentTable) && currentTable.length > 0) {
+      if (!currentObject[lastHeading]) currentObject[lastHeading] = [];
+      currentObject[lastHeading].push(...currentTable);
+    } else if (!Array.isArray(currentTable) && Object.keys(currentTable).length > 0) {
+      currentObject[lastHeading] = currentTable;
+    }
+  } else {
+    if (Array.isArray(currentTable) && currentTable.length > 0) {
+      result.push(...currentTable);
+    } else if (!Array.isArray(currentTable) && Object.keys(currentTable).length > 0) {
+      result.push(currentTable);
+    }
+  }
+}
+
 function markdownToJson(markdown) {
   const lines = markdown.trim().split('\n');
   const result = [];
@@ -24,194 +75,83 @@ function markdownToJson(markdown) {
   let inTable = false;
   let currentObject = {};
   let lastHeading = null;
-  
+
   lines.forEach((line, index) => {
     const trimmed = line.trim();
-    
-    // Check for table header
+
     if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
-      const cells = trimmed.split('|').map(c => c.trim()).filter(c => c);
-      
-      // Check if next line is separator (---)
-      if (index + 1 < lines.length) {
-        const nextLine = lines[index + 1].trim();
-        if (nextLine.match(/^\|[\s\-:]+\|$/)) {
-          // This is a table header
-          headers = cells;
-          inTable = true;
-          currentTable = [];
-          return;
-        }
-      }
-      
-      // If we're in a table, parse row
-      if (inTable && headers.length > 0) {
-        // Skip separator lines
-        if (trimmed.match(/^\|[\s\-:]+\|$/)) {
-          return;
-        }
-        
-        if (cells.length === headers.length) {
-          const row = {};
-          headers.forEach((header, idx) => {
-            let value = cells[idx] || '';
-            // Try to parse as number, boolean, or null
-            if (value === 'true') value = true;
-            else if (value === 'false') value = false;
-            else if (value === 'null' || value === '') value = null;
-            else if (!isNaN(value) && value !== '') {
-              const num = Number(value);
-              if (!isNaN(num)) value = num;
-            } else {
-              // Try to parse as JSON
-              try {
-                value = JSON.parse(value);
-              } catch (e) {
-                // Keep as string, unescape pipes
-                value = value.replace(/\\\|/g, '|').replace(/<br>/g, '\n');
-              }
-            }
-            row[header] = value;
-          });
-          
-          // Skip rows where all values are "---"
-          const allValues = Object.values(row);
-          const isSeparatorRow = allValues.length > 0 && allValues.every(v => v === '---' || String(v).trim() === '---');
-          if (!isSeparatorRow) {
-            currentTable.push(row);
-          }
-        }
-      } else if (cells.length === 2 && cells[0] === 'Key' && cells[1] === 'Value') {
-        // Key-Value table header
-        headers = ['Key', 'Value'];
-        inTable = true;
-        currentTable = {};
-        return;
-      } else if (inTable && headers.length === 2 && headers[0] === 'Key') {
-        // Key-Value table row
-        if (cells.length === 2) {
-          let value = cells[1] || '';
-          // Try to parse value
-          if (value === 'true') value = true;
-          else if (value === 'false') value = false;
-          else if (value === 'null' || value === '') value = null;
-          else if (!isNaN(value) && value !== '') {
-            const num = Number(value);
-            if (!isNaN(num)) value = num;
+      const cells = trimmed.split('|').map((c) => c.trim()).filter((c) => c);
+
+      if (isSeparatorLine(trimmed)) return;
+
+      if (!inTable) {
+        const nextLine = lines[index + 1] ? lines[index + 1].trim() : '';
+        if (isSeparatorLine(nextLine)) {
+          if (cells.length === 2 && cells[0] === 'Key' && cells[1] === 'Value') {
+            headers = ['Key', 'Value'];
+            inTable = true;
+            currentTable = {};
           } else {
-            try {
-              value = JSON.parse(value);
-            } catch (e) {
-              value = value.replace(/\\\|/g, '|').replace(/<br>/g, '\n');
-            }
-          }
-          currentTable[cells[0]] = value;
-        }
-      } else if (!inTable && cells.length >= 2) {
-        // Try to detect table without explicit header separator
-        if (index === 0 || (index > 0 && !lines[index - 1].trim().match(/^\|[\s\-:]+\|$/))) {
-          if (headers.length === 0) {
             headers = cells;
             inTable = true;
             currentTable = [];
-          } else if (inTable && cells.length === headers.length) {
-            const row = {};
-            headers.forEach((header, idx) => {
-              let value = cells[idx] || '';
-              if (value === 'true') value = true;
-              else if (value === 'false') value = false;
-              else if (value === 'null' || value === '') value = null;
-              else if (!isNaN(value) && value !== '') {
-                const num = Number(value);
-                if (!isNaN(num)) value = num;
-              } else {
-                try {
-                  value = JSON.parse(value);
-                } catch (e) {
-                  value = value.replace(/\\\|/g, '|').replace(/<br>/g, '\n');
-                }
-              }
-              row[header] = value;
-            });
-            
-            // Skip separator rows
-            const allValues = Object.values(row);
-            const isSeparatorRow = allValues.length > 0 && allValues.every(v => v === '---' || String(v).trim() === '---');
-            if (!isSeparatorRow) {
-              currentTable.push(row);
-            }
+          }
+          return;
+        }
+        return;
+      }
+
+      if (inTable && headers.length > 0) {
+        if (Array.isArray(currentTable) === false && headers[0] === 'Key') {
+          if (cells.length === 2) {
+            currentTable[cells[0]] = parseValue(cells[1]);
+          }
+          return;
+        }
+
+        if (cells.length === headers.length) {
+          const row = {};
+          headers.forEach((header, idx) => {
+            row[header] = parseValue(cells[idx] || '');
+          });
+          if (!isSeparatorRow(row)) {
+            currentTable.push(row);
           }
         }
       }
     } else {
-      // Not a table line
+      // End of table — ✅ group under heading instead of flat merge
       if (inTable) {
-        // End of table
-        if (currentTable) {
-          if (Array.isArray(currentTable) && currentTable.length > 0) {
-            result.push(...currentTable);
-          } else if (Object.keys(currentTable).length > 0) {
-            result.push(currentTable);
-          }
-        }
+        flushTable(currentTable, lastHeading, result, currentObject);
         inTable = false;
         headers = [];
         currentTable = null;
       }
-      
-      // Check for headings
-      if (trimmed.startsWith('##')) {
-        const heading = trimmed.replace(/^##+\s*/, '');
-        lastHeading = heading;
-        if (!currentObject[heading]) {
-          currentObject[heading] = {};
-        }
-      } else if (trimmed.startsWith('#')) {
+
+      if (trimmed.startsWith('#')) {
         const heading = trimmed.replace(/^#+\s*/, '');
         lastHeading = heading;
         if (!currentObject[heading]) {
           currentObject[heading] = {};
         }
       } else if (trimmed.includes('**') && trimmed.includes(':')) {
-        // Key-value pair: **key**: value
         const match = trimmed.match(/\*\*([^*]+)\*\*:\s*(.+)/);
         if (match) {
           const key = match[1].trim();
-          let value = match[2].trim();
-          // Try to parse value
-          if (value === 'true') value = true;
-          else if (value === 'false') value = false;
-          else if (value === 'null') value = null;
-          else if (!isNaN(value) && value !== '') {
-            const num = Number(value);
-            if (!isNaN(num)) value = num;
-          } else {
-            try {
-              value = JSON.parse(value);
-            } catch (e) {
-              // Keep as string
-            }
-          }
+          const value = parseValue(match[2].trim());
           if (lastHeading && currentObject[lastHeading]) {
             currentObject[lastHeading][key] = value;
           } else {
             currentObject[key] = value;
           }
         }
-      } else if (trimmed.includes(':') && !trimmed.startsWith('|')) {
-        // Simple key-value pair without **
+      } else if (trimmed.includes(':') && !trimmed.startsWith('|') && !trimmed.startsWith('-')) {
         const colonIndex = trimmed.indexOf(':');
         if (colonIndex > 0) {
           const key = trimmed.substring(0, colonIndex).trim();
-          let value = trimmed.substring(colonIndex + 1).trim();
-          if (value) {
-            if (value === 'true') value = true;
-            else if (value === 'false') value = false;
-            else if (value === 'null') value = null;
-            else if (!isNaN(value) && value !== '') {
-              const num = Number(value);
-              if (!isNaN(num)) value = num;
-            }
+          const rawValue = trimmed.substring(colonIndex + 1).trim();
+          if (rawValue) {
+            const value = parseValue(rawValue);
             if (lastHeading && currentObject[lastHeading]) {
               currentObject[lastHeading][key] = value;
             } else {
@@ -222,38 +162,14 @@ function markdownToJson(markdown) {
       }
     }
   });
-  
-  // Handle remaining table
+
+  // ✅ Handle remaining table at end of file — also grouped under heading
   if (inTable && currentTable) {
-    if (Array.isArray(currentTable) && currentTable.length > 0) {
-      const filteredTable = currentTable.filter(row => {
-        const allValues = Object.values(row);
-        return !(allValues.length > 0 && allValues.every(v => v === '---' || String(v).trim() === '---'));
-      });
-      if (filteredTable.length > 0) {
-        result.push(...filteredTable);
-      }
-    } else if (Object.keys(currentTable).length > 0) {
-      const allValues = Object.values(currentTable);
-      const isSeparator = allValues.length > 0 && allValues.every(v => v === '---' || String(v).trim() === '---');
-      if (!isSeparator) {
-        result.push(currentTable);
-      }
-    }
+    flushTable(currentTable, lastHeading, result, currentObject);
   }
-  
-  // Filter result array to remove any separator rows
-  const filteredResult = result.filter(item => {
-    if (typeof item === 'object' && item !== null && !Array.isArray(item)) {
-      const allValues = Object.values(item);
-      return !(allValues.length > 0 && allValues.every(v => v === '---' || String(v).trim() === '---'));
-    }
-    return true;
-  });
-  
-  // Return result
-  if (filteredResult.length > 0) {
-    return filteredResult.length === 1 ? filteredResult[0] : filteredResult;
+
+  if (result.length > 0) {
+    return result.length === 1 ? result[0] : result;
   } else if (Object.keys(currentObject).length > 0) {
     return currentObject;
   } else {
@@ -261,58 +177,32 @@ function markdownToJson(markdown) {
   }
 }
 
-// Process a POST request
-export default async (req, res) => {
-  // TODO: This should be in middleware.
-  if (req.method !== 'POST') {
-    return ReE(res, 'I ❤️ JSON. But you shouldn\'t be here.');
+async function handler(req, res) {
+  await runMiddleware(req, res, [
+    validateMethod(['POST']),
+    rateLimit({ maxRequests: 20, windowMs: 60000 }),
+    parseFile(uploadDir, { maxFileSize: getToolLimits('markdowntojson').maxFileSize }),
+  ]);
+
+  // ✅ Guard against missing file
+  if (!req.uploadedFile?.path) {
+    return ReE(res, 'No file uploaded.', 400);
   }
 
-  // parse form with a Promise wrapper
-  const data = await new Promise((resolve, reject) => {
-    const form = new IncomingForm();
-    form.uploadDir = uploadDir;
-    form.keepExtensions = true;
-    form.parse(req, async (_err, _fields, files) => {
-      if (_err) return reject(_err);
-      resolve({ _fields, files });
-    });
+  const markdownRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
+  const jsonData = markdownToJson(markdownRead);
+  const jsonContent = JSON.stringify(jsonData, null, 4);
+
+  const modifiedDate = new Date().getTime();
+  const outputFilePath = `${downloadDir}/${modifiedDate}.json`;
+  fs.writeFileSync(outputFilePath, jsonContent, 'utf8');
+
+  const toPath = outputFilePath.replace('public/', '');
+
+  return ReS(res, {
+    message: 'I ❤️ JSON. Markdown to JSON Conversion Successful.',
+    data: `/${toPath}`,
   });
-
-  if (!(data.files && data.files.fileInfo)) {
-    return ReE(res, 'I ❤️ JSON. But you forgot to bring something to me.');
-  }
-
-  // Get file path - handle different formidable structures
-  const fileInfo = data.files.fileInfo;
-  let filePath = fileInfo.filepath || fileInfo.path;
-  if (Array.isArray(fileInfo)) {
-    const firstFile = fileInfo[0];
-    filePath = firstFile.filepath || firstFile.path;
-  }
-  if (!filePath) {
-    return ReE(res, 'I ❤️ JSON. But I couldn\'t find the file path.');
-  }
-
-  const markdownRead = fs.readFileSync(filePath, 'utf8');
-  try {
-    const jsonData = markdownToJson(markdownRead);
-    const jsonContent = JSON.stringify(jsonData, null, 4);
-    
-    if (!!jsonContent) {
-      const modifiedDate = new Date().getTime();
-      const filePath = `${downloadDir}/${modifiedDate}.json`;
-      fs.writeFileSync(filePath, jsonContent, 'utf8');
-
-      let toPath = filePath.replace('public/', '');
-
-      return ReS(res, {
-        message: 'I ❤️ JSON. Markdown to JSON Conversion Successful.',
-        data: `/${toPath}`
-      });
-    }
-  } catch (e) {
-    return ReE(res, 'I ❤️ JSON. But you have entered invalid Markdown.');
-  }
 }
 
+export default errorHandler(handler);

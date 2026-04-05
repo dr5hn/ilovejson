@@ -1,9 +1,14 @@
-import { IncomingForm } from 'formidable';
 import { initDirs } from '@utils/initdir';
 import { globals } from '@constants/globals';
-import { ReE, ReS } from '@utils/reusables';
+import { ReS, ReE } from '@utils/reusables';
+import { runMiddleware } from '@middleware/apiMiddleware';
+import { validateMethod } from '@middleware/methodValidation';
+import { rateLimit } from '@middleware/rateLimit';
+import { parseFile } from '@middleware/fileParser';
+import { errorHandler } from '@middleware/errorHandler';
+import { getToolLimits } from '@constants/limits';
 
-const fs = require('fs');
+import fs from 'fs';
 initDirs();
 
 const uploadDir = globals.uploadDir + '/jsontohtml';
@@ -13,9 +18,8 @@ export const config = {
   api: {
     bodyParser: false,
   },
-}
+};
 
-// Helper function to escape HTML
 function escapeHtml(text) {
   if (text === null || text === undefined) return '';
   const map = {
@@ -23,12 +27,11 @@ function escapeHtml(text) {
     '<': '&lt;',
     '>': '&gt;',
     '"': '&quot;',
-    "'": '&#039;'
+    "'": '&#039;',
   };
-  return String(text).replace(/[&<>"']/g, m => map[m]);
+  return String(text).replace(/[&<>"']/g, (m) => map[m]);
 }
 
-// Helper function to format value for display
 function formatValue(value) {
   if (value === null) return 'null';
   if (value === undefined) return 'undefined';
@@ -38,38 +41,38 @@ function formatValue(value) {
   return escapeHtml(String(value));
 }
 
-// Helper function to convert JSON to HTML table
 function jsonToHtmlTable(data) {
   let html = '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">\n';
-  
+
   if (Array.isArray(data) && data.length > 0) {
-    // Array of objects
     if (typeof data[0] === 'object' && data[0] !== null && !Array.isArray(data[0])) {
-      const keys = Object.keys(data[0]);
+      // ✅ Collect all unique keys across all rows, not just data[0]
+      const keys = [...new Set(data.flatMap((item) => Object.keys(item)))];
+
       html += '  <thead>\n    <tr>\n';
-      keys.forEach(key => {
+      keys.forEach((key) => {
         html += `      <th style="background-color: #f2f2f2; font-weight: bold; padding: 8px;">${escapeHtml(String(key))}</th>\n`;
       });
       html += '    </tr>\n  </thead>\n  <tbody>\n';
-      
-      data.forEach((item, index) => {
-        const rowClass = index % 2 === 0 ? 'style="background-color: #f9f9f9;"' : '';
-        html += `    <tr ${rowClass}>\n`;
-        keys.forEach(key => {
+
+      data.forEach((item) => {
+        // ✅ Removed inline rowClass — CSS nth-child handles alternating rows
+        html += `    <tr>\n`;
+        keys.forEach((key) => {
           html += `      <td style="padding: 8px;">${formatValue(item[key])}</td>\n`;
         });
         html += '    </tr>\n';
       });
-      
+
       html += '  </tbody>\n';
     } else {
       // Array of primitives
       html += '  <thead>\n    <tr>\n';
       html += '      <th style="background-color: #f2f2f2; font-weight: bold; padding: 8px;">Value</th>\n';
       html += '    </tr>\n  </thead>\n  <tbody>\n';
-      data.forEach((item, index) => {
-        const rowClass = index % 2 === 0 ? 'style="background-color: #f9f9f9;"' : '';
-        html += `    <tr ${rowClass}>\n`;
+      data.forEach((item) => {
+        // ✅ Removed inline rowClass
+        html += `    <tr>\n`;
         html += `      <td style="padding: 8px;">${formatValue(item)}</td>\n`;
         html += '    </tr>\n';
       });
@@ -79,9 +82,9 @@ function jsonToHtmlTable(data) {
     // Single object - key-value table
     html += '  <tbody>\n';
     const entries = Object.entries(data);
-    entries.forEach(([key, value], index) => {
-      const rowClass = index % 2 === 0 ? 'style="background-color: #f9f9f9;"' : '';
-      html += `    <tr ${rowClass}>\n`;
+    entries.forEach(([key, value]) => {
+      // ✅ Removed inline rowClass
+      html += `    <tr>\n`;
       html += `      <th style="background-color: #f2f2f2; font-weight: bold; padding: 8px; text-align: left;">${escapeHtml(String(key))}</th>\n`;
       html += `      <td style="padding: 8px;">${formatValue(value)}</td>\n`;
       html += '    </tr>\n';
@@ -95,50 +98,28 @@ function jsonToHtmlTable(data) {
     html += '    </tr>\n';
     html += '  </tbody>\n';
   }
-  
+
   html += '</table>';
   return html;
 }
 
-// Process a POST request
-export default async (req, res) => {
-  // TODO: This should be in middleware.
-  if (req.method !== 'POST') {
-    return ReE(res, 'I ❤️ JSON. But you shouldn\'t be here.');
+async function handler(req, res) {
+  await runMiddleware(req, res, [
+    validateMethod(['POST']),
+    rateLimit({ maxRequests: 20, windowMs: 60000 }),
+    parseFile(uploadDir, { maxFileSize: getToolLimits('jsontohtml').maxFileSize }),
+  ]);
+
+  // ✅ Guard against missing file
+  if (!req.uploadedFile?.path) {
+    return ReE(res, 'No file uploaded.', 400);
   }
 
-  // parse form with a Promise wrapper
-  const data = await new Promise((resolve, reject) => {
-    const form = new IncomingForm();
-    form.uploadDir = uploadDir;
-    form.keepExtensions = true;
-    form.parse(req, async (_err, _fields, files) => {
-      if (_err) return reject(_err);
-      resolve({ _fields, files });
-    });
-  });
+  const jsonRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
+  const jsonData = JSON.parse(jsonRead);
+  const tableHtml = jsonToHtmlTable(jsonData);
 
-  if (!(data.files && data.files.fileInfo)) {
-    return ReE(res, 'I ❤️ JSON. But you forgot to bring something to me.');
-  }
-
-  // Get file path - handle different formidable structures
-  const fileInfo = data.files.fileInfo;
-  let filePath = fileInfo.filepath || fileInfo.path;
-  if (Array.isArray(fileInfo)) {
-    const firstFile = fileInfo[0];
-    filePath = firstFile.filepath || firstFile.path;
-  }
-  if (!filePath) {
-    return ReE(res, 'I ❤️ JSON. But I couldn\'t find the file path.');
-  }
-
-  const jsonRead = fs.readFileSync(filePath, 'utf8');
-  try {
-    if (JSON.parse(jsonRead) && !!jsonRead) {
-      const jsonData = JSON.parse(jsonRead);
-      const tableHtml = jsonToHtmlTable(jsonData);
-      const htmlContent = `<!DOCTYPE html>
+  const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -191,20 +172,17 @@ export default async (req, res) => {
   </div>
 </body>
 </html>`;
-      
-      const modifiedDate = new Date().getTime();
-      const filePath = `${downloadDir}/${modifiedDate}.html`;
-      fs.writeFileSync(filePath, htmlContent, 'utf8');
 
-      let toPath = filePath.replace('public/', '');
+  const modifiedDate = new Date().getTime();
+  const outputFilePath = `${downloadDir}/${modifiedDate}.html`;
+  fs.writeFileSync(outputFilePath, htmlContent, 'utf8');
 
-      return ReS(res, {
-        message: 'I ❤️ JSON. JSON to HTML Conversion Successful.',
-        data: `/${toPath}`
-      });
-    }
-  } catch (e) {
-    return ReE(res, 'I ❤️ JSON. But you have entered invalid JSON.');
-  }
+  const toPath = outputFilePath.replace('public/', '');
+
+  return ReS(res, {
+    message: 'I ❤️ JSON. JSON to HTML Conversion Successful.',
+    data: `/${toPath}`,
+  });
 }
 
+export default errorHandler(handler);

@@ -1,4 +1,4 @@
-const fs = require('fs');
+import fs from 'fs';
 import { tools } from '@constants/tools';
 import { globals } from '@constants/globals';
 

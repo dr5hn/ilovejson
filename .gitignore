@@ -2,7 +2,6 @@
 
 # dependencies
 /node_modules
-yarn.lock
 
 # testing
 /coverage
@@ -19,6 +18,9 @@ yarn.lock
 .DS_Store
 .env
 !.gitkeep
+
+# generated files
+/src/generated
 
 # debug
 npm-debug.log*
