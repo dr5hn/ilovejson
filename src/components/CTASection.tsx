@@ -56,7 +56,7 @@ export function CTASection() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/json-to-csv"
+              href="/#tools"
               className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-red-500 to-rose-600 text-white font-bold rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-300 shadow-2xl shadow-red-500/30 hover:-translate-y-1 hover:shadow-red-500/40"
             >
               Start Converting

@@ -6,9 +6,6 @@ on:
       name:
         description: 'Passcode'
         required: true
-  # push:
-    # branches:
-      # - master
 
 jobs:
   build:
@@ -16,18 +13,20 @@ jobs:
 
     steps:
       - name: Deploying to Dev
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.DEV_IP }}
           username: ${{ secrets.DEV_USER }}
           password: ${{ secrets.DEV_PASS }}
           script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
             cd /var/www/ilovejson.com/
             eval "$(ssh-agent -s)"
             ssh-add ~/.ssh/git_rsa
             git checkout .
             git pull
             npm ci
-            npm run build
+            NODE_OPTIONS="--max-old-space-size=4096" npm run build
             pm2 reload ilovejson --update-env
           debug: true

@@ -140,7 +140,7 @@ export function HeroSection() {
                 onChange={(e) => handleSearch(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") handleSearchSubmit() }}
                 onFocus={() => { if (searchResults.length > 0) setShowResults(true) }}
-                onBlur={() => setTimeout(() => setShowResults(false), 200)}
+                onBlur={() => setTimeout(() => setShowResults(false), 300)}
                 placeholder="What do you want to convert? Try 'JSON to CSV'..."
                 className="flex-1 px-4 py-4 text-foreground placeholder:text-muted-foreground bg-transparent outline-none text-base md:text-lg"
               />
@@ -160,6 +160,7 @@ export function HeroSection() {
                   key={result.href}
                   href={result.href}
                   className="flex items-center gap-3 px-6 py-3.5 text-sm font-medium text-foreground hover:bg-secondary transition-colors"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => setShowResults(false)}
                 >
                   <ArrowRight className="w-4 h-4 text-muted-foreground" />

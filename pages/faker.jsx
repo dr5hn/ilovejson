@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import Layout from '@components/layout';
@@ -30,6 +30,11 @@ export default function JsonFaker() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [isMac, setIsMac] = useState(false);
+
+  useEffect(() => {
+    setIsMac(navigator.platform.toUpperCase().includes("MAC"));
+  }, []);
 
   const addField = () => {
     setFields([
@@ -431,7 +436,7 @@ export default function JsonFaker() {
             </button>
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Keyboard className="w-3.5 h-3.5" />
-              <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">Ctrl+Enter</kbd>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">{isMac ? "⌘" : "Ctrl"}+Enter</kbd>
             </span>
           </div>
         )}

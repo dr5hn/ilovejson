@@ -10,6 +10,11 @@ export default function RepairPage() {
   const [error, setError] = useState<string | null>(null)
   const [fixes, setFixes] = useState<string[]>([])
   const [copied, setCopied] = useState(false)
+  const [isMac, setIsMac] = useState(false)
+
+  useEffect(() => {
+    setIsMac(navigator.platform.toUpperCase().includes("MAC"))
+  }, [])
 
   const repairJSON = useCallback(() => {
     if (!input.trim()) {
@@ -232,7 +237,7 @@ export default function RepairPage() {
           </button>
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Keyboard className="w-3.5 h-3.5" />
-            <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">Ctrl+Enter</kbd>
+            <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">{isMac ? "⌘" : "Ctrl"}+Enter</kbd>
           </span>
         </div>
       </div>

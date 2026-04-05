@@ -246,7 +246,7 @@ export function ConverterPage({
 
             {/* IDLE */}
             {status === "idle" && !isFileTooLarge && (
-              <div className="text-center py-14 px-60">
+              <div className="text-center py-14 px-4 md:px-16 lg:px-32">
                 <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-muted to-muted/50 rounded-3xl flex items-center justify-center">
                   <FileText className="w-12 h-12 text-muted-foreground/50" />
                 </div>
@@ -254,8 +254,8 @@ export function ConverterPage({
                   {isDragActive ? "Drop it here!" : `Drop your ${fromFormat} file here`}
                 </h3>
                 <p className="text-muted-foreground mb-10">or click to browse from your computer</p>
-                <div className="inline-flex items-center gap-3 px-16 py-6 bg-gradient-to-r from-red-500 to-rose-600 text-white font-semibold rounded-2xl cursor-pointer transition-all shadow-xl shadow-red-500/25 hover:shadow-red-500/40 hover:-translate-y-0.5 text-xl">
-                  <Upload className="w-7 h-7" />
+                <div className="inline-flex items-center gap-3 px-8 md:px-16 py-5 md:py-6 bg-gradient-to-r from-red-500 to-rose-600 text-white font-semibold rounded-2xl cursor-pointer transition-all shadow-xl shadow-red-500/25 hover:shadow-red-500/40 hover:-translate-y-0.5 text-lg md:text-xl">
+                  <Upload className="w-6 h-6 md:w-7 md:h-7" />
                   Select {fromFormat} file
                 </div>
                 <p className="text-sm text-muted-foreground mt-6">
@@ -297,7 +297,7 @@ export function ConverterPage({
                 {isLargeFile && <LargeFileIndicator sizeMB={selectedFileSizeMB} />}
                 <button
                   onClick={(e) => { e.stopPropagation(); handleSubmit() }}
-                  className="inline-flex items-center gap-3 px-16 py-6 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-semibold rounded-2xl transition-all shadow-xl shadow-red-500/25 hover:shadow-red-500/40 hover:-translate-y-0.5 text-xl mt-4"
+                  className="inline-flex items-center gap-3 px-8 md:px-16 py-5 md:py-6 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-semibold rounded-2xl transition-all shadow-xl shadow-red-500/25 hover:shadow-red-500/40 hover:-translate-y-0.5 text-xl mt-4"
                 >
                   Convert to {toFormat}
                   <ArrowRight className="w-7 h-7" />
@@ -347,7 +347,7 @@ export function ConverterPage({
 <a
                     href={downloadLink}
                     download={downloadFilename}
-                    className="inline-flex items-center gap-3 px-16 py-6 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold rounded-2xl transition-all shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 text-xl"
+                    className="inline-flex items-center gap-3 px-8 md:px-16 py-5 md:py-6 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold rounded-2xl transition-all shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 text-xl"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Download className="w-7 h-7" />

@@ -3,16 +3,15 @@ name: ILoveJSON CI
 on:
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [25.x]
 
     steps:
     - uses: actions/checkout@v4
@@ -24,7 +23,7 @@ jobs:
         cache: 'npm'
 
     - name: Install & Build
-      run: |
-        npm ci && npm run build
+      run: npm ci && npm run build
       env:
         CI: true
+        NODE_OPTIONS: "--max-old-space-size=4096"
