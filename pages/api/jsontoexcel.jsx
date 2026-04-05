@@ -1,14 +1,15 @@
 import { initDirs } from '@utils/initdir';
 import { globals } from '@constants/globals';
-import * as XLSX from 'xlsx';
-import { ReS } from '@utils/reusables';
+import ExcelJS from 'exceljs';
+import { ReS, ReE } from '@utils/reusables';
 import { runMiddleware } from '@middleware/apiMiddleware';
 import { validateMethod } from '@middleware/methodValidation';
 import { rateLimit } from '@middleware/rateLimit';
 import { parseFile } from '@middleware/fileParser';
 import { errorHandler } from '@middleware/errorHandler';
+import { getToolLimits } from '@constants/limits';
 
-const fs = require('fs');
+import fs from 'fs';
 initDirs();
 
 const uploadDir = globals.uploadDir + '/jsontoexcel';
@@ -24,12 +25,11 @@ async function handler(req, res) {
   await runMiddleware(req, res, [
     validateMethod(['POST']),
     rateLimit({ maxRequests: 20, windowMs: 60000 }),
-    parseFile(uploadDir, { maxFileSize: 104857600 }),
+    parseFile(uploadDir, { maxFileSize: getToolLimits('jsontoexcel').maxFileSize }),
   ]);
 
-  // ✅ Guard against missing file
   if (!req.uploadedFile?.path) {
-    return res.status(400).json({ error: 'No file uploaded.' });
+    return ReE(res, 'No file uploaded.', 400);
   }
 
   const jsonRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
@@ -39,7 +39,7 @@ async function handler(req, res) {
     jsonData = [jsonData];
   }
 
-  // ✅ Pre-serialize nested objects — prevents [object Object] in cells
+  // Pre-serialize nested objects — prevents [object Object] in cells
   const flatData = jsonData.map(row => {
     const flat = {};
     for (const [key, val] of Object.entries(row)) {
@@ -48,18 +48,25 @@ async function handler(req, res) {
     return flat;
   });
 
-  const workbook = XLSX.utils.book_new();
-  const worksheet = XLSX.utils.json_to_sheet(flatData);
+  const workbook = new ExcelJS.Workbook();
 
-  // ✅ Fix fields lookup + sanitize sheet name for Excel rules (max 31 chars, no special chars)
-  const rawSheet = req.body?.sheetName || req.fields?.sheetName || 'Sheet1';
+  // Read sheetName from formidable-parsed fields (req.body is undefined when bodyParser: false)
+  const sheetField = req.uploadedFile?.fields?.sheetName;
+  const rawSheet = (Array.isArray(sheetField) ? sheetField[0] : sheetField) || 'Sheet1';
   const sheetName = rawSheet.replace(/[\\\/\?\*\[\]:]/g, '').substring(0, 31) || 'Sheet1';
 
-  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+  const worksheet = workbook.addWorksheet(sheetName);
+
+  // Set columns from the keys of the first row
+  const headers = Object.keys(flatData[0] || {});
+  worksheet.columns = headers.map(key => ({ header: key, key }));
+
+  // Add data rows
+  flatData.forEach(row => worksheet.addRow(row));
 
   const modifiedDate = new Date().getTime();
   const outputFilePath = `${downloadDir}/${modifiedDate}.xlsx`;
-  XLSX.writeFile(workbook, outputFilePath);
+  await workbook.xlsx.writeFile(outputFilePath);
 
   const toPath = outputFilePath.replace('public/', '');
 

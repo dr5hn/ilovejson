@@ -1,10 +1,10 @@
 import { UtilityPage } from '@components/UtilityPage'
 import { FileCode } from 'lucide-react'
-import GenerateSchema from 'generate-schema'
+import toJsonSchema from 'to-json-schema'
 
 const generateSchema = (input: string): string => {
   const parsed = JSON.parse(input)
-  const schema = GenerateSchema.json('Generated', parsed)
+  const schema = toJsonSchema(parsed)
   return JSON.stringify(schema, null, 2)
 }
 

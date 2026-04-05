@@ -3,9 +3,6 @@
 import Link from "next/link"
 import { ChevronDown, Menu, X, Sparkles, Search, ArrowRight } from "lucide-react"
 import { useState, useEffect } from "react"
-import { useSession, signIn } from "next-auth/react"
-import { ThemeToggle } from "@components/ThemeToggle"
-import UserMenu from "@components/UserMenu"
 
 const toolCategories = [
   {
@@ -18,7 +15,7 @@ const toolCategories = [
       { name: "Viewer", href: "/viewer", icon: "EYE", color: "#0ea5e9" },
       { name: "Editor", href: "/editor", icon: "EDT", color: "#3b82f6" },
       { name: "Repair", href: "/repair", icon: "FIX", color: "#f97316" },
-      { name: "Generate Schema", href: "/generateschema", icon: "SCH", color: "#a855f7" },
+      { name: "Schema", href: "/generateschema", icon: "SCH", color: "#a855f7" },
       { name: "Diff", href: "/diff", icon: "DIF", color: "#06b6d4" },
       { name: "Merge", href: "/merge", icon: "MRG", color: "#6366f1" },
       { name: "Query", href: "/query", icon: "QRY", color: "#eab308" },
@@ -27,33 +24,40 @@ const toolCategories = [
     ],
   },
   {
-    title: "Convert",
-    description: "Transform between formats",
+    title: "Convert from JSON",
+    description: "Export to other formats",
     tools: [
-      { name: "JSON to CSV", href: "/json-to-csv", icon: "CSV", color: "#22c55e" },
-      { name: "CSV to JSON", href: "/csv-to-json", icon: "{ }", color: "#ef4444" },
-      { name: "JSON to YAML", href: "/json-to-yaml", icon: "YML", color: "#f97316" },
-      { name: "YAML to JSON", href: "/yaml-to-json", icon: "{ }", color: "#ef4444" },
-      { name: "JSON to XML", href: "/json-to-xml", icon: "XML", color: "#eab308" },
-      { name: "XML to JSON", href: "/xml-to-json", icon: "{ }", color: "#ef4444" },
+      { name: "JSON → CSV", href: "/json-to-csv", icon: "CSV", color: "#22c55e" },
+      { name: "JSON → YAML", href: "/json-to-yaml", icon: "YML", color: "#f97316" },
+      { name: "JSON → XML", href: "/json-to-xml", icon: "XML", color: "#eab308" },
+      { name: "JSON → TOML", href: "/json-to-toml", icon: "TML", color: "#9c4221" },
+      { name: "JSON → TypeScript", href: "/json-to-typescript", icon: "TS", color: "#3178c6" },
+      { name: "JSON → PHP", href: "/json-to-php", icon: "PHP", color: "#777bb4" },
+      { name: "JSON → SQL", href: "/json-to-sql", icon: "SQL", color: "#336791" },
+      { name: "JSON → Markdown", href: "/json-to-markdown", icon: "MD", color: "#083fa1" },
+      { name: "JSON → HTML", href: "/json-to-html", icon: "HTM", color: "#e44d26" },
+      { name: "JSON → Excel", href: "/json-to-excel", icon: "XLS", color: "#217346" },
     ],
   },
   {
-    title: "Transform",
-    description: "Generate code structures",
+    title: "Convert to JSON",
+    description: "Import from other formats",
     tools: [
-      { name: "JSON to TypeScript", href: "/json-to-typescript", icon: "TS", color: "#3178c6" },
-      { name: "JSON to PHP", href: "/json-to-php", icon: "PHP", color: "#777bb4" },
-      { name: "JSON to SQL", href: "/json-to-sql", icon: "SQL", color: "#336791" },
-      { name: "JSON to Markdown", href: "/json-to-markdown", icon: "MD", color: "#083fa1" },
-      { name: "JSON to HTML", href: "/json-to-html", icon: "HTM", color: "#e44d26" },
-      { name: "JSON to Excel", href: "/json-to-excel", icon: "XLS", color: "#217346" },
+      { name: "CSV → JSON", href: "/csv-to-json", icon: "CSV", color: "#22c55e" },
+      { name: "YAML → JSON", href: "/yaml-to-json", icon: "YML", color: "#f97316" },
+      { name: "XML → JSON", href: "/xml-to-json", icon: "XML", color: "#eab308" },
+      { name: "TOML → JSON", href: "/toml-to-json", icon: "TML", color: "#9c4221" },
+      { name: "TypeScript → JSON", href: "/typescript-to-json", icon: "TS", color: "#3178c6" },
+      { name: "PHP → JSON", href: "/php-to-json", icon: "PHP", color: "#777bb4" },
+      { name: "SQL → JSON", href: "/sql-to-json", icon: "SQL", color: "#336791" },
+      { name: "Markdown → JSON", href: "/markdown-to-json", icon: "MD", color: "#083fa1" },
+      { name: "HTML → JSON", href: "/html-to-json", icon: "HTM", color: "#e44d26" },
+      { name: "Excel → JSON", href: "/excel-to-json", icon: "XLS", color: "#217346" },
     ],
   },
 ]
 
 export function Header() {
-  const { data: session, status } = useSession()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [megaMenuOpen, setMegaMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
@@ -113,7 +117,7 @@ export function Header() {
                 megaMenuOpen ? "opacity-100 translate-y-0 visible" : "opacity-0 -translate-y-2 invisible"
               }`}
             >
-              <div className="bg-card rounded-3xl shadow-2xl shadow-black/10 border border-border p-8 min-w-[720px]">
+              <div className="bg-card rounded-3xl shadow-2xl shadow-black/10 border border-border p-8 min-w-[800px]">
                 <div className="grid grid-cols-3 gap-2">
                   {toolCategories.map((category) => (
                     <div key={category.title}>
@@ -162,32 +166,23 @@ export function Header() {
           >
             API
           </Link>
+          <Link
+            href="/cli"
+            className="px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary rounded-full transition-all duration-200"
+          >
+            CLI
+          </Link>
         </nav>
 
         {/* Right Actions */}
         <div className="flex items-center gap-2">
-          <button className="hidden md:flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground bg-secondary/80 hover:bg-secondary rounded-full transition-all duration-200 group">
+          <Link
+            href="/#tools"
+            className="hidden md:flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground bg-secondary/80 hover:bg-secondary rounded-full transition-all duration-200 group"
+          >
             <Search className="w-4 h-4 group-hover:text-foreground transition-colors" />
-            <span className="text-muted-foreground/70">Search</span>
-            <kbd className="hidden lg:inline-flex items-center gap-0.5 px-2 py-0.5 bg-background rounded-md text-[10px] font-mono text-muted-foreground border border-border">
-              ⌘K
-            </kbd>
-          </button>
-
-          <ThemeToggle />
-
-          {status === 'loading' ? (
-            <div className="w-10 h-10 rounded-full bg-muted animate-pulse" />
-          ) : session ? (
-            <UserMenu />
-          ) : (
-            <button
-              onClick={() => signIn()}
-              className="hidden sm:inline-flex items-center px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 rounded-full transition-all duration-300 shadow-lg shadow-red-500/20 hover:shadow-red-500/30 hover:-translate-y-0.5 hover:scale-105"
-            >
-              Get Started
-            </button>
-          )}
+            <span className="text-muted-foreground/70">Search tools</span>
+          </Link>
 
           {/* Mobile menu button */}
           <button
@@ -235,15 +230,28 @@ export function Header() {
               </div>
             </div>
           ))}
-          <div className="border-t border-border mt-2 pt-4">
-            {!session && (
-              <button
-                onClick={() => signIn()}
-                className="block w-full px-4 py-3.5 text-sm font-semibold text-white bg-gradient-to-r from-red-500 to-rose-600 rounded-xl text-center shadow-lg shadow-red-500/20"
-              >
-                Get Started Free
-              </button>
-            )}
+          <div className="border-t border-border mt-2 pt-4 flex flex-col gap-2">
+            <Link
+              href="/cli"
+              className="block w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl text-center transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              CLI
+            </Link>
+            <Link
+              href="/pricing"
+              className="block w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl text-center transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Pricing
+            </Link>
+            <Link
+              href="/api-docs"
+              className="block w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl text-center transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              API
+            </Link>
           </div>
         </nav>
       </div>

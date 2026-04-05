@@ -2,6 +2,7 @@ import { GetStaticPaths, GetStaticProps } from 'next'
 import { ConverterPage } from '@components/ConverterPage'
 import { tools } from '@constants/tools'
 import { mimeTypes, formatColors, formatLabels } from '@constants/mimetypes'
+import { getToolLimits, formatSize } from '@constants/limits'
 
 interface SlugPageProps {
   slug: string
@@ -11,9 +12,11 @@ interface SlugPageProps {
     description: string
     slug: string
   }
+  maxFileSize: number
+  maxFileSizeLabel: string
 }
 
-const SlugPage = ({ slug, tool }: SlugPageProps) => {
+const SlugPage = ({ slug, tool, maxFileSize, maxFileSizeLabel }: SlugPageProps) => {
   const fileType = slug?.split('-')
   const fromFormat = fileType?.[0]?.toLowerCase() || 'json'
   const toFormat = fileType?.[fileType.length - 1]?.toLowerCase() || 'json'
@@ -30,6 +33,8 @@ const SlugPage = ({ slug, tool }: SlugPageProps) => {
       fromColor={formatColors[fromFormat] || '#6b7280'}
       toColor={formatColors[toFormat] || '#6b7280'}
       mimeType={mimeType}
+      maxFileSize={maxFileSize}
+      maxFileSizeLabel={maxFileSizeLabel}
     />
   )
 }
@@ -50,5 +55,13 @@ export const getStaticProps: GetStaticProps<SlugPageProps> = async ({ params }) 
     description: 'Convert files',
     slug: slug
   }
-  return { props: { slug, tool } }
+  const limits = getToolLimits(slug)
+  return {
+    props: {
+      slug,
+      tool,
+      maxFileSize: limits.maxFileSize,
+      maxFileSizeLabel: formatSize(limits.maxFileSize),
+    }
+  }
 }

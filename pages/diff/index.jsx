@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
+import Head from 'next/head';
 import Layout from '@components/layout';
 import AlertError from '@components/error';
-import { diff } from 'deep-diff';
+import diff from 'microdiff';
 
 const JSONDiff = () => {
   const [sourceJSON1, setSourceJSON1] = useState('');
@@ -18,7 +19,7 @@ const JSONDiff = () => {
       const obj2 = JSON.parse(sourceJSON2);
 
       const differences = diff(obj1, obj2);
-      setDiffResult(differences || []);
+      setDiffResult(differences);
       setShowError(false);
     } catch (e) {
       setErrorMessage('Invalid JSON in one or both inputs.');
@@ -34,16 +35,14 @@ const JSONDiff = () => {
 
     return differences
       .map((d, i) => {
-        const path = d.path ? d.path.join('.') : 'root';
-        switch (d.kind) {
-          case 'N':
-            return `[${i + 1}] ADDED at "${path}": ${JSON.stringify(d.rhs)}`;
-          case 'D':
-            return `[${i + 1}] DELETED at "${path}": ${JSON.stringify(d.lhs)}`;
-          case 'E':
-            return `[${i + 1}] EDITED at "${path}": ${JSON.stringify(d.lhs)} -> ${JSON.stringify(d.rhs)}`;
-          case 'A':
-            return `[${i + 1}] ARRAY at "${path}[${d.index}]": ${d.item.kind}`;
+        const path = d.path.join('.');
+        switch (d.type) {
+          case 'CREATE':
+            return `[${i + 1}] ADDED at "${path}": ${JSON.stringify(d.value)}`;
+          case 'REMOVE':
+            return `[${i + 1}] DELETED at "${path}": ${JSON.stringify(d.oldValue)}`;
+          case 'CHANGE':
+            return `[${i + 1}] EDITED at "${path}": ${JSON.stringify(d.oldValue)} -> ${JSON.stringify(d.value)}`;
           default:
             return `[${i + 1}] UNKNOWN at "${path}"`;
         }
@@ -53,22 +52,21 @@ const JSONDiff = () => {
 
   const copyToClipboard = () => {
     if (outputRef.current) {
-      outputRef.current.select();
-      document.execCommand('copy');
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      navigator.clipboard.writeText(outputRef.current.value).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
     }
   };
 
   const getSummary = () => {
     if (!diffResult) return null;
     if (diffResult.length === 0)
-      return { added: 0, deleted: 0, edited: 0, array: 0 };
+      return { added: 0, deleted: 0, edited: 0 };
     return {
-      added: diffResult.filter((d) => d.kind === 'N').length,
-      deleted: diffResult.filter((d) => d.kind === 'D').length,
-      edited: diffResult.filter((d) => d.kind === 'E').length,
-      array: diffResult.filter((d) => d.kind === 'A').length,
+      added: diffResult.filter((d) => d.type === 'CREATE').length,
+      deleted: diffResult.filter((d) => d.type === 'REMOVE').length,
+      edited: diffResult.filter((d) => d.type === 'CHANGE').length,
     };
   };
 
@@ -76,6 +74,10 @@ const JSONDiff = () => {
 
   return (
     <Layout title="JSON Diff" description="Compare two JSON files and find differences.">
+      <Head>
+        <title>JSON Diff - Compare JSON Files Online Free | ILoveJSON</title>
+        <meta name="description" content="Compare two JSON files and find differences instantly. Free online JSON diff tool — highlight additions, deletions, and changes." />
+      </Head>
       <div className="app mt-5 w-full h-full p-8 font-sans">
         <div className="row sm:flex">
           <div className="col sm:w-1/2">
@@ -135,9 +137,6 @@ const JSONDiff = () => {
                 </span>
                 <span className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded text-sm">
                   ~ Edited: {summary.edited}
-                </span>
-                <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded text-sm">
-                  Array: {summary.array}
                 </span>
               </div>
             )}

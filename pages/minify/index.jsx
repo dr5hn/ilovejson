@@ -1,4 +1,3 @@
-import { UtilityPage } from "@/components/utility-page"
 import { UtilityPage } from '@components/UtilityPage'
 import { Shrink } from "lucide-react"
 
@@ -15,7 +14,7 @@ export default function MinifyPage() {
       processLabel="Minify JSON"
       processFn={minifyJson}
       color="#8b5cf6"
-      icon={<Shrink className="w-10 h-10" />}
+      icon={<Shrink className="w-5 h-5" />}
     />
   )
 }

@@ -7,8 +7,9 @@ import { validateMethod } from '@middleware/methodValidation';
 import { rateLimit } from '@middleware/rateLimit';
 import { parseFile } from '@middleware/fileParser';
 import { errorHandler } from '@middleware/errorHandler';
+import { getToolLimits } from '@constants/limits';
 
-const fs = require('fs');
+import fs from 'fs';
 initDirs();
 
 const uploadDir = globals.uploadDir + '/jsontocsv';
@@ -32,7 +33,7 @@ async function handler(req, res) {
   await runMiddleware(req, res, [
     validateMethod(['POST']),
     rateLimit({ maxRequests: 20, windowMs: 60000 }),
-    parseFile(uploadDir, { maxFileSize: 104857600 }), // 100MB
+    parseFile(uploadDir, { maxFileSize: getToolLimits('jsontocsv').maxFileSize }), // 100MB
   ]);
 
   // Core conversion logic

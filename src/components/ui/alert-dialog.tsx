@@ -29,9 +29,8 @@ function AlertDialogPortal({
 }
 AlertDialogPortal.displayName = 'AlertDialogPortal'
 
-// FIX: Added missing generic type parameters to React.forwardRef<...>(...)
-const AlertDialogOverlay = React.forwardRef
-  React.ElementRef<typeof AlertDialogPrimitive.Overlay>,
+const AlertDialogOverlay = React.forwardRef<
+  React.ComponentRef<typeof AlertDialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Overlay
@@ -47,8 +46,8 @@ const AlertDialogOverlay = React.forwardRef
 AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName
 
 // FIX: Added missing generic type parameters to React.forwardRef<...>(...)
-const AlertDialogContent = React.forwardRef
-  React.ElementRef<typeof AlertDialogPrimitive.Content>,
+const AlertDialogContent = React.forwardRef<
+  React.ComponentRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
 >(({ className, ...props }, ref) => (
   <AlertDialogPortal>
@@ -98,8 +97,8 @@ function AlertDialogFooter({
 AlertDialogFooter.displayName = 'AlertDialogFooter'
 
 // FIX: Added missing generic type parameters to React.forwardRef<...>(...)
-const AlertDialogTitle = React.forwardRef
-  React.ElementRef<typeof AlertDialogPrimitive.Title>,
+const AlertDialogTitle = React.forwardRef<
+  React.ComponentRef<typeof AlertDialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Title>
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Title
@@ -112,8 +111,8 @@ const AlertDialogTitle = React.forwardRef
 AlertDialogTitle.displayName = AlertDialogPrimitive.Title.displayName
 
 // FIX: Added missing generic type parameters to React.forwardRef<...>(...)
-const AlertDialogDescription = React.forwardRef
-  React.ElementRef<typeof AlertDialogPrimitive.Description>,
+const AlertDialogDescription = React.forwardRef<
+  React.ComponentRef<typeof AlertDialogPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Description>
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Description
@@ -127,8 +126,8 @@ AlertDialogDescription.displayName =
   AlertDialogPrimitive.Description.displayName
 
 // FIX: Added missing generic type parameters to React.forwardRef<...>(...)
-const AlertDialogAction = React.forwardRef
-  React.ElementRef<typeof AlertDialogPrimitive.Action>,
+const AlertDialogAction = React.forwardRef<
+  React.ComponentRef<typeof AlertDialogPrimitive.Action>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Action>
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Action
@@ -140,8 +139,8 @@ const AlertDialogAction = React.forwardRef
 AlertDialogAction.displayName = AlertDialogPrimitive.Action.displayName
 
 // FIX: Added missing generic type parameters to React.forwardRef<...>(...)
-const AlertDialogCancel = React.forwardRef
-  React.ElementRef<typeof AlertDialogPrimitive.Cancel>,
+const AlertDialogCancel = React.forwardRef<
+  React.ComponentRef<typeof AlertDialogPrimitive.Cancel>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Cancel>
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Cancel

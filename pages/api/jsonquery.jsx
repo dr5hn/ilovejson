@@ -7,8 +7,9 @@ import { validateMethod } from '@middleware/methodValidation';
 import { rateLimit } from '@middleware/rateLimit';
 import { parseFile } from '@middleware/fileParser';
 import { errorHandler } from '@middleware/errorHandler';
+import { getToolLimits } from '@constants/limits';
 
-const fs = require('fs');
+import fs from 'fs';
 initDirs();
 
 const uploadDir = globals.uploadDir + '/jsonquery';
@@ -25,11 +26,12 @@ async function handler(req, res) {
   await runMiddleware(req, res, [
     validateMethod(['POST']),
     rateLimit({ maxRequests: 50, windowMs: 60000 }), // Higher limit for query tool
-    parseFile(uploadDir, { maxFileSize: 104857600 }), // 100MB
+    parseFile(uploadDir, { maxFileSize: getToolLimits('jsonquery').maxFileSize }), // 100MB
   ]);
 
-  // Get query from form fields
-  const query = req.body?.query || '';
+  // Get query from formidable-parsed fields (req.body is undefined when bodyParser: false)
+  const queryField = req.uploadedFile?.fields?.query;
+  const query = (Array.isArray(queryField) ? queryField[0] : queryField) || '';
 
   if (!query || query.trim() === '') {
     return ReE(res, 'Query is required', 400);
@@ -43,10 +45,13 @@ async function handler(req, res) {
     // Execute JMESPath query
     const result = jmespath.search(jsonData, query);
 
+    // Normalize undefined to null so JSON.stringify produces valid output
+    const safeResult = result === undefined ? null : result;
+
     // Save result if user wants to download
     const modifiedDate = new Date().getTime();
     const outputFilePath = `${downloadDir}/${modifiedDate}.json`;
-    fs.writeFileSync(outputFilePath, JSON.stringify(result, null, 2), 'utf8');
+    fs.writeFileSync(outputFilePath, JSON.stringify(safeResult, null, 2), 'utf8');
 
     // Cleanup uploaded file
     fs.unlinkSync(req.uploadedFile.path);
@@ -56,7 +61,7 @@ async function handler(req, res) {
     return ReS(res, {
       message: 'Query executed successfully.',
       data: `/${toPath}`,
-      result: result,
+      result: safeResult,
       query: query,
     });
   } catch (error) {

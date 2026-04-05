@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react"
+import Head from "next/head"
 import { Header } from "@components/Header"
 import { Footer } from "@components/Footer"
 import { Button } from "@components/ui/button"
@@ -64,6 +65,10 @@ export default function EditorPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <Head>
+        <title>JSON Editor - Edit JSON Online Free | ILoveJSON</title>
+        <meta name="description" content="Edit, format, and validate JSON in a powerful online editor. Syntax highlighting, auto-formatting, and error detection — free, no signup." />
+      </Head>
       <Header />
       <main className="flex-1 flex flex-col">
         <div className="bg-gradient-to-b from-muted/50 to-background py-6 border-b">

@@ -7,7 +7,7 @@ import { validateMethod } from '@middleware/methodValidation';
 import { rateLimit } from '@middleware/rateLimit';
 import { errorHandler } from '@middleware/errorHandler';
 
-const fs = require('fs');
+import fs from 'fs';
 initDirs();
 
 const downloadDir = globals.downloadDir + '/jsonfaker';

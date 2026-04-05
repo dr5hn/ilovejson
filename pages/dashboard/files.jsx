@@ -22,9 +22,9 @@ const Files = ({ files }) => {
                 Save your converted files for up to 7 days with a Pro subscription. 
                 Free users can download files immediately after conversion.
               </p>
-              <button className="mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
-                Upgrade to Pro
-              </button>
+              <a href="/pricing" className="inline-block mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
+                View Pricing
+              </a>
             </div>
           </div>
         </div>

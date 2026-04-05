@@ -27,7 +27,7 @@ const badgeVariants = cva(
   },
 )
 
-const Badge = React.forwardRef
+const Badge = React.forwardRef<
   HTMLSpanElement,
   React.ComponentProps<'span'> &
     VariantProps<typeof badgeVariants> & { asChild?: boolean }

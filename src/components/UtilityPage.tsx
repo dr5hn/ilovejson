@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState, useCallback, useEffect } from "react"
+import Head from "next/head"
 import Layout from "@components/layout"
 import { Copy, Check, Download, Sparkles, Keyboard, RotateCcw } from "lucide-react"
 
@@ -95,9 +96,19 @@ export function UtilityPage({
     setError("")
   }
 
+  const pageTitle = `${title} Online - Free JSON Tool | ILoveJSON`
+
   return (
     <Layout>
-      <div className="flex-1 flex flex-col min-h-[calc(100vh-200px)]">
+      <Head>
+        <title>{pageTitle}</title>
+        <meta name="description" content={`${description} Free online tool — no signup required.`} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={description} />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={description} />
+      </Head>
+      <div className="w-full flex-1 flex flex-col min-h-[calc(100vh-200px)]">
         {/* Title Section */}
         <div className="text-center py-6 border-b border-border bg-muted/20">
           <div className="flex items-center justify-center gap-3 mb-2">
@@ -113,9 +124,9 @@ export function UtilityPage({
         </div>
 
         {/* Full Screen Editor Area */}
-        <div className={`flex-1 grid ${showOutput ? "lg:grid-cols-2" : "grid-cols-1"} min-h-0`}>
+        <div className={`w-full flex-1 grid ${showOutput ? "lg:grid-cols-2" : "grid-cols-1"} min-h-0 px-4 md:px-8 py-4 gap-6`}>
           {/* Input Panel */}
-          <div className="flex flex-col border-r border-border min-h-0">
+          <div className="flex flex-col border border-border rounded-lg overflow-hidden min-h-0">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
               <span className="text-sm font-semibold text-foreground">Source</span>
               <div className="flex items-center gap-2">
@@ -142,7 +153,7 @@ export function UtilityPage({
 
           {/* Output Panel */}
           {showOutput && (
-            <div className="flex flex-col min-h-0">
+            <div className="flex flex-col border border-border rounded-lg overflow-hidden min-h-0">
               <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-foreground">Output</span>

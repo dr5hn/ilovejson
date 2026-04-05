@@ -1,14 +1,15 @@
 import { initDirs } from '@utils/initdir';
 import { globals } from '@constants/globals';
-import * as XLSX from 'xlsx'; // ✅ consistent ES module import
+import ExcelJS from 'exceljs';
 import { ReS, ReE } from '@utils/reusables';
 import { runMiddleware } from '@middleware/apiMiddleware';
 import { validateMethod } from '@middleware/methodValidation';
 import { rateLimit } from '@middleware/rateLimit';
 import { parseFile } from '@middleware/fileParser';
 import { errorHandler } from '@middleware/errorHandler';
+import { getToolLimits } from '@constants/limits';
 
-const fs = require('fs');
+import fs from 'fs';
 initDirs();
 
 const uploadDir = globals.uploadDir + '/exceltojson';
@@ -32,10 +33,9 @@ async function handler(req, res) {
   await runMiddleware(req, res, [
     validateMethod(['POST']),
     rateLimit({ maxRequests: 20, windowMs: 60000 }),
-    parseFile(uploadDir, { maxFileSize: 104857600 }),
+    parseFile(uploadDir, { maxFileSize: getToolLimits('exceltojson').maxFileSize }),
   ]);
 
-  // ✅ Guard against missing file
   if (!req.uploadedFile?.path) {
     return ReE(res, 'No file uploaded.', 400);
   }
@@ -43,36 +43,46 @@ async function handler(req, res) {
   // Handle invalid or corrupted Excel files gracefully
   let workbook;
   try {
-    const fileBuffer = fs.readFileSync(req.uploadedFile.path);
-    workbook = XLSX.read(fileBuffer, {
-      type: 'buffer',
-      cellFormula: false,
-      cellDates: true,
-      dateNF: 'yyyy-mm-dd',
-    });
+    workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(req.uploadedFile.path);
   } catch (err) {
-    return ReE(res, 'Failed to read Excel file. Please upload a valid .xlsx, .xls, or .csv file.', 422);
+    return ReE(res, 'Failed to read Excel file. Please upload a valid .xlsx file.', 422);
   }
 
-  // ✅ Fix fields lookup — check req.body/req.fields, not req.uploadedFile.fields
-  const sheetName = req.body?.sheetName || req.fields?.sheetName || workbook.SheetNames[0];
-  const worksheet = workbook.Sheets[sheetName];
+  // Read sheetName from formidable-parsed fields (req.body is undefined when bodyParser: false)
+  const sheetField = req.uploadedFile?.fields?.sheetName;
+  const requestedSheet = (Array.isArray(sheetField) ? sheetField[0] : sheetField);
+  const worksheet = requestedSheet
+    ? workbook.getWorksheet(requestedSheet)
+    : workbook.worksheets[0];
 
   if (!worksheet) {
-    return ReE(res, `Sheet "${sheetName}" not found in Excel file.`, 422);
+    return ReE(res, `Sheet "${requestedSheet}" not found in Excel file.`, 422);
   }
 
-  const rawData = XLSX.utils.sheet_to_json(worksheet, {
-    defval: null,
-    raw: false,
+  // Convert worksheet rows to JSON objects using the header row as keys
+  const rows = [];
+  let headers = [];
+
+  worksheet.eachRow((row, rowNumber) => {
+    const values = row.values; // row.values is 1-indexed, index 0 is undefined
+    if (rowNumber === 1) {
+      headers = values.slice(1).map(v => (v != null ? String(v) : ''));
+      return;
+    }
+    const obj = {};
+    headers.forEach((header, i) => {
+      const val = values[i + 1];
+      obj[header] = val !== undefined ? val : null;
+    });
+    rows.push(obj);
   });
 
-  if (rawData.length === 0) {
+  if (rows.length === 0) {
     return ReE(res, 'No data found in the Excel sheet.', 422);
   }
 
-  const headers = Object.keys(rawData[0]);
-  const jsonData = rawData.filter((row) => !isSummaryRow(row, headers));
+  const jsonData = rows.filter((row) => !isSummaryRow(row, headers));
 
   if (jsonData.length === 0) {
     return ReE(res, 'No valid data rows found after filtering summary rows.', 422);

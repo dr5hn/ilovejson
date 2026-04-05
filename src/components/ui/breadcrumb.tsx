@@ -13,7 +13,7 @@ const Breadcrumb = React.forwardRef<HTMLElement, React.ComponentProps<'nav'>>(
 )
 Breadcrumb.displayName = 'Breadcrumb'
 
-const BreadcrumbList = React.forwardRef
+const BreadcrumbList = React.forwardRef<
   HTMLOListElement,
   React.ComponentProps<'ol'>
 >(({ className, ...props }, ref) => (
@@ -29,7 +29,7 @@ const BreadcrumbList = React.forwardRef
 ))
 BreadcrumbList.displayName = 'BreadcrumbList'
 
-const BreadcrumbItem = React.forwardRef
+const BreadcrumbItem = React.forwardRef<
   HTMLLIElement,
   React.ComponentProps<'li'>
 >(({ className, ...props }, ref) => (
@@ -42,7 +42,7 @@ const BreadcrumbItem = React.forwardRef
 ))
 BreadcrumbItem.displayName = 'BreadcrumbItem'
 
-const BreadcrumbLink = React.forwardRef
+const BreadcrumbLink = React.forwardRef<
   HTMLAnchorElement,
   React.ComponentProps<'a'> & { asChild?: boolean }
 >(({ asChild, className, ...props }, ref) => {
@@ -58,7 +58,7 @@ const BreadcrumbLink = React.forwardRef
   }
 
   return (
-
+    <a
       ref={ref}
       data-slot="breadcrumb-link"
       className={cn('hover:text-foreground transition-colors', className)}
@@ -68,7 +68,7 @@ const BreadcrumbLink = React.forwardRef
 })
 BreadcrumbLink.displayName = 'BreadcrumbLink'
 
-const BreadcrumbPage = React.forwardRef
+const BreadcrumbPage = React.forwardRef<
   HTMLSpanElement,
   React.ComponentProps<'span'>
 >(({ className, ...props }, ref) => (
@@ -84,7 +84,7 @@ const BreadcrumbPage = React.forwardRef
 ))
 BreadcrumbPage.displayName = 'BreadcrumbPage'
 
-const BreadcrumbSeparator = React.forwardRef
+const BreadcrumbSeparator = React.forwardRef<
   HTMLLIElement,
   React.ComponentProps<'li'>
 >(({ children, className, ...props }, ref) => (
@@ -101,7 +101,7 @@ const BreadcrumbSeparator = React.forwardRef
 ))
 BreadcrumbSeparator.displayName = 'BreadcrumbSeparator'
 
-const BreadcrumbEllipsis = React.forwardRef
+const BreadcrumbEllipsis = React.forwardRef<
   HTMLSpanElement,
   React.ComponentProps<'span'>
 >(({ className, ...props }, ref) => (

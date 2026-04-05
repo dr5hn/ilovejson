@@ -1,5 +1,6 @@
 import { Header } from '@components/Header'
 import { Footer } from '@components/Footer'
+import { KeyboardShortcutsDialog } from '@components/KeyboardShortcuts'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -30,6 +31,7 @@ const Layout = ({ children, title, description }: LayoutProps) => (
     </main>
 
     <Footer />
+    <KeyboardShortcutsDialog />
   </div>
 )
 

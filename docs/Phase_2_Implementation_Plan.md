@@ -28,7 +28,7 @@ Implementing **Phase 2: Expansion** with five priority areas:
 
 **Dependencies**:
 ```bash
-yarn add @iarna/toml
+npm install @iarna/toml
 ```
 
 **New Files**:
@@ -93,7 +93,7 @@ function jsonToSQL(data, tableName = 'data', dialect = 'mysql') {
 
 **Dependencies**:
 ```bash
-yarn add json-to-ts
+npm install json-to-ts
 ```
 
 **New Files**:
@@ -121,7 +121,7 @@ const interfaces = JsonToTS(jsonData, { rootName: 'Root' });
 
 **Dependencies**:
 ```bash
-yarn add xlsx
+npm install xlsx
 ```
 
 **New Files**:
@@ -160,7 +160,7 @@ const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
 **Dependencies**:
 ```bash
-yarn add deep-diff
+npm install deep-diff
 ```
 
 **New Files**:
@@ -272,7 +272,7 @@ function deepMerge(target, ...sources) {
 
 **Dependencies**:
 ```bash
-yarn add jmespath
+npm install jmespath
 # Note: jq itself requires WebAssembly or server-side execution
 ```
 
@@ -319,7 +319,7 @@ yarn add jmespath
 
 **Dependencies**:
 ```bash
-yarn add @faker-js/faker
+npm install @faker-js/faker
 ```
 
 **New Files**:
@@ -382,8 +382,8 @@ function generateField(config) {
 
 **Dependencies**:
 ```bash
-yarn add next-auth @auth/prisma-adapter
-yarn add prisma @prisma/client  # For database
+npm install next-auth @auth/prisma-adapter
+npm install prisma @prisma/client  # For database
 ```
 
 **New Files**:
@@ -734,20 +734,20 @@ package.json                 # Add new dependencies
 
 ```bash
 # Conversion tools
-yarn add @iarna/toml          # TOML parsing
-yarn add json-to-ts           # TypeScript generation
-yarn add xlsx                 # Excel support
+npm install @iarna/toml          # TOML parsing
+npm install json-to-ts           # TypeScript generation
+npm install xlsx                 # Excel support
 
 # Utility tools
-yarn add deep-diff            # JSON diff
-yarn add jmespath             # JSON query
-yarn add @faker-js/faker      # Fake data generation
+npm install deep-diff            # JSON diff
+npm install jmespath             # JSON query
+npm install @faker-js/faker      # Fake data generation
 
 # Authentication
-yarn add next-auth            # Authentication
-yarn add @auth/prisma-adapter # Prisma adapter
-yarn add prisma               # Database ORM
-yarn add @prisma/client       # Prisma client
+npm install next-auth            # Authentication
+npm install @auth/prisma-adapter # Prisma adapter
+npm install prisma               # Database ORM
+npm install @prisma/client       # Prisma client
 ```
 
 ---

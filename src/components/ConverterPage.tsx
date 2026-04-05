@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react"
 import { useDropzone } from "react-dropzone"
+import Head from "next/head"
 import Layout from "@components/layout"
 import AlertError from "@components/error"
 import FileHistory from "@components/FileHistory"
@@ -21,6 +22,8 @@ interface ConverterPageProps {
   fromColor: string
   toColor: string
   mimeType: Record<string, string[]>
+  maxFileSize?: number
+  maxFileSizeLabel?: string
   sampleInput?: string
   sampleOutput?: string
 }
@@ -34,6 +37,8 @@ export function ConverterPage({
   fromColor,
   toColor,
   mimeType,
+  maxFileSize: maxFileSizeProp,
+  maxFileSizeLabel = "100MB",
   sampleInput = `{\n  "name": "John Doe",\n  "email": "john@example.com",\n  "age": 30\n}`,
   sampleOutput = `name,email,age\nJohn Doe,john@example.com,30`,
 }: ConverterPageProps) {
@@ -50,7 +55,7 @@ export function ConverterPage({
   const [processingStage, setProcessingStage] = useState("")
 
   const { addToHistory } = useFileHistory()
-  const maxSize = globals.maxFileSize.free
+  const maxSize = maxFileSizeProp || globals.maxFileSize.free
   const largeFileThreshold = globals.largeFileWarningThreshold
 
   const handleFileAccepted = () => {
@@ -63,6 +68,23 @@ export function ConverterPage({
       setProcessingStage("")
     }
   }
+
+  const {
+    isDragActive,
+    getRootProps,
+    getInputProps,
+    isDragReject,
+    isDragAccept,
+    acceptedFiles,
+    fileRejections,
+  } = useDropzone({
+    maxFiles: 1,
+    accept: mimeType,
+    minSize: 1,
+    maxSize,
+    noKeyboard: true,
+    onDropAccepted: handleFileAccepted,
+  })
 
   const handleSubmit = useCallback(async () => {
     if (acceptedFiles.length) {
@@ -91,8 +113,6 @@ export function ConverterPage({
             setProcessingStage("Complete!")
           }
         }
-
-
 
         const response = await postFileWithProgress(`api/${api}`, formData, isLargeFile ? handleProgress : undefined)
 
@@ -140,7 +160,7 @@ export function ConverterPage({
         }, 8000)
       }
     }
-  }, [api, fileType, largeFileThreshold, addToHistory])
+  }, [acceptedFiles, api, fileType, largeFileThreshold, addToHistory])
 
   const handleReset = useCallback(() => {
     setDownloadLink("")
@@ -151,23 +171,6 @@ export function ConverterPage({
     setUploadProgress(0)
     setProcessingStage("")
   }, [])
-
-  const {
-    isDragActive,
-    getRootProps,
-    getInputProps,
-    isDragReject,
-    isDragAccept,
-    acceptedFiles,
-    fileRejections,
-  } = useDropzone({
-    maxFiles: 1,
-    accept: mimeType,
-    minSize: 1,
-    maxSize,
-    noKeyboard: true,
-    onDropAccepted: handleFileAccepted,
-  })
 
   useKeyboardShortcuts(
     {
@@ -188,8 +191,19 @@ export function ConverterPage({
 
   const status = loading ? "loading" : converted ? "converted" : acceptedFiles.length > 0 ? "ready" : "idle"
 
+  const pageTitle = `${fromFormat} to ${toFormat} Converter - Free Online | ILoveJSON`
+  const metaDescription = `${description} Convert ${fromFormat} to ${toFormat} online for free. No signup required — fast, secure, and easy to use.`
+
   return (
     <Layout>
+      <Head>
+        <title>{pageTitle}</title>
+        <meta name="description" content={metaDescription} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={metaDescription} />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={metaDescription} />
+      </Head>
       <div className="flex-1 flex flex-col">
 
         {/* ── HEADER (from ConverterSection) ── */}
@@ -245,7 +259,10 @@ export function ConverterPage({
                   Select {fromFormat} file
                 </div>
                 <p className="text-sm text-muted-foreground mt-6">
-                  Maximum file size: 100MB - Files auto-delete after 2 minutes
+                  Maximum file size: {maxFileSizeLabel}
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-2">
+                  Uploaded files are automatically deleted after 30 minutes.
                 </p>
               </div>
             )}
@@ -257,7 +274,7 @@ export function ConverterPage({
                   <span className="text-red-500 text-4xl">!</span>
                 </div>
                 <h3 className="text-2xl font-semibold text-red-500 mb-2">File too large!</h3>
-                <p className="text-muted-foreground">Maximum allowed size is 100MB</p>
+                <p className="text-muted-foreground">Maximum allowed size is {maxFileSizeLabel}</p>
               </div>
             )}
 

@@ -1,4 +1,12 @@
-# iLoveJSON Phase 1 Implementation Plan
+# iLoveJSON Phase 1 Implementation Plan — COMPLETED
+
+> **Status: COMPLETE** — All Phase 1 features shipped on the `new_feature` branch.
+> - API Middleware system (`src/middleware/`) — done
+> - Dark mode + theme toggle — done
+> - Keyboard shortcuts (⌘+Enter, Escape, Shift+?) — done
+> - 100MB file uploads with progress tracking — done
+> - Rate limiting (20 req/min per IP) — done
+> - File cleanup utility — done
 
 ## Overview
 

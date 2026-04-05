@@ -5,6 +5,8 @@
  * Allows chaining multiple middleware functions in sequence.
  */
 
+import { runCleanupIfNeeded } from '@utils/fileCleanup';
+
 /**
  * Run multiple middleware functions in sequence
  * @param {Object} req - Next.js request object
@@ -13,6 +15,9 @@
  * @returns {Promise<void>}
  */
 export async function runMiddleware(req, res, middlewares) {
+  // Trigger throttled cleanup of old upload/download files
+  runCleanupIfNeeded();
+
   const responseFinished = () => res.headersSent || res.writableEnded;
 
   for (const middleware of middlewares) {

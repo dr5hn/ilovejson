@@ -1,4 +1,8 @@
 User-agent: *
-Disallow: /*
-Disallow: /_next*
-Disallow: /auth*
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+Disallow: /dashboard/
+Disallow: /_next/
+
+Sitemap: https://www.ilovejson.com/sitemap.xml

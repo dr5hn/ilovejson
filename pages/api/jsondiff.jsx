@@ -1,14 +1,15 @@
 import { initDirs } from '@utils/initdir';
 import { globals } from '@constants/globals';
-import { diff } from 'deep-diff';
+import diff from 'microdiff';
 import { ReS, ReE } from '@utils/reusables';
 import { runMiddleware } from '@middleware/apiMiddleware';
 import { validateMethod } from '@middleware/methodValidation';
 import { rateLimit } from '@middleware/rateLimit';
 import { errorHandler } from '@middleware/errorHandler';
+import { getToolLimits } from '@constants/limits';
 import formidable from 'formidable';
 
-const fs = require('fs');
+import fs from 'fs';
 initDirs();
 
 const uploadDir = globals.uploadDir + '/jsondiff';
@@ -26,11 +27,13 @@ async function handler(req, res) {
     rateLimit({ maxRequests: 20, windowMs: 60000 }),
   ]);
 
+  const limits = getToolLimits('jsondiff');
+
   // Parse two files
   const form = formidable({
     uploadDir,
     keepExtensions: true,
-    maxFileSize: 104857600, // 100MB
+    maxFileSize: limits.maxFileSize,
     multiples: true,
   });
 
@@ -56,14 +59,13 @@ async function handler(req, res) {
     const json2 = JSON.parse(json2Content);
 
     // Calculate differences
-    const differences = diff(json1, json2) || [];
+    const differences = diff(json1, json2);
 
     // Calculate summary
     const summary = {
-      added: differences.filter(d => d.kind === 'N').length,
-      removed: differences.filter(d => d.kind === 'D').length,
-      modified: differences.filter(d => d.kind === 'E').length,
-      arrayChanged: differences.filter(d => d.kind === 'A').length,
+      added: differences.filter(d => d.type === 'CREATE').length,
+      removed: differences.filter(d => d.type === 'REMOVE').length,
+      modified: differences.filter(d => d.type === 'CHANGE').length,
       total: differences.length,
       identical: differences.length === 0,
     };

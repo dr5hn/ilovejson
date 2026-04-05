@@ -10,13 +10,13 @@ Ensure you have the following installed:
 Installing Dependencies
 To set up your environment, first install the necessary dependencies:
 ```bash
-yarn
+npm install
 ```
 
 Run Server
 To start the local server, run the following command:
 ```bash
-yarn dev
+npm run dev
 ```
 
 Using Docker
@@ -115,10 +115,10 @@ You can configure one or multiple OAuth providers. At least one provider must be
 
 ```bash
 # Generate Prisma client (if not already done)
-yarn prisma generate
+npx prisma generate
 
 # Create and apply migrations
-yarn prisma migrate dev --name init
+npx prisma migrate dev --name init
 ```
 
 ### 5. Verify Setup

@@ -1,13 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Zap, Shield, Clock, ArrowRight, Sparkles } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/router"
+import { Zap, Shield, ArrowRight, Sparkles, Lock, Globe } from "lucide-react"
 import Link from "next/link"
+import { tools } from "@constants/tools"
 
 const features = [
   { icon: Zap, label: "Instant conversion" },
   { icon: Shield, label: "100% private" },
-  { icon: Clock, label: "Auto-delete" },
+  { icon: Globe, label: "20+ formats" },
 ]
 
 const popularTools = [
@@ -16,15 +18,57 @@ const popularTools = [
   { name: "Validate", href: "/validate" },
 ]
 
+const allSearchableTools = [
+  ...tools.map(t => ({ name: `${t.from} to ${t.to}`, href: `/${t.slug}` })),
+  { name: "Compress JSON", href: "/compress" },
+  { name: "Beautify JSON", href: "/beautify" },
+  { name: "Validate JSON", href: "/validate" },
+  { name: "JSON Viewer", href: "/viewer" },
+  { name: "JSON Editor", href: "/editor" },
+  { name: "Repair JSON", href: "/repair" },
+  { name: "Generate Schema", href: "/generateschema" },
+  { name: "JSON Diff", href: "/diff" },
+  { name: "JSON Merge", href: "/merge" },
+  { name: "JSON Query", href: "/query" },
+  { name: "JSON Faker", href: "/faker" },
+  { name: "Minify JSON", href: "/minify" },
+]
+
 export function HeroSection() {
+  const router = useRouter()
   const [mounted, setMounted] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResults, setSearchResults] = useState<typeof allSearchableTools>([])
+  const [showResults, setShowResults] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query)
+    if (query.trim().length < 2) {
+      setSearchResults([])
+      setShowResults(false)
+      return
+    }
+    const lower = query.toLowerCase()
+    const matches = allSearchableTools.filter(t =>
+      t.name.toLowerCase().includes(lower)
+    ).slice(0, 6)
+    setSearchResults(matches)
+    setShowResults(matches.length > 0)
+  }, [])
+
+  const handleSearchSubmit = useCallback(() => {
+    if (searchResults.length > 0) {
+      router.push(searchResults[0].href)
+      setShowResults(false)
+    }
+  }, [searchResults, router])
+
   return (
-    <section className="relative w-full pt-16 pb-20 overflow-hidden">
+    <section className="relative w-full pt-4 pb-20 overflow-hidden">
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div
           className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-gradient-to-br from-red-200/40 via-rose-200/30 to-transparent rounded-full blur-3xl -translate-y-1/2 animate-blob"
@@ -92,18 +136,38 @@ export function HeroSection() {
               <Sparkles className="w-5 h-5 text-muted-foreground ml-4" />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSearchSubmit() }}
+                onFocus={() => { if (searchResults.length > 0) setShowResults(true) }}
+                onBlur={() => setTimeout(() => setShowResults(false), 200)}
                 placeholder="What do you want to convert? Try 'JSON to CSV'..."
                 className="flex-1 px-4 py-4 text-foreground placeholder:text-muted-foreground bg-transparent outline-none text-base md:text-lg"
               />
-              <Link
-                href="/json-to-csv"
+              <button
+                onClick={handleSearchSubmit}
                 className="px-6 md:px-8 py-3.5 bg-gradient-to-r from-red-500 to-rose-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-300 shadow-lg shadow-red-500/25 hover:shadow-red-500/40 hover:scale-[1.02] flex items-center gap-2 group"
               >
-                <span className="hidden sm:inline">Get Started</span>
+                <span className="hidden sm:inline">Go</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
+              </button>
             </div>
           </div>
+          {showResults && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-card rounded-2xl shadow-2xl border border-border overflow-hidden z-50">
+              {searchResults.map((result) => (
+                <Link
+                  key={result.href}
+                  href={result.href}
+                  className="flex items-center gap-3 px-6 py-3.5 text-sm font-medium text-foreground hover:bg-secondary transition-colors"
+                  onClick={() => setShowResults(false)}
+                >
+                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                  {result.name}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-2 mb-12">

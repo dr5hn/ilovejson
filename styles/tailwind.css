@@ -3,6 +3,8 @@
 
 @source "../src/components/**/*.jsx";
 @source "../src/components/**/*.tsx";
+@source "../src/contexts/**/*.{jsx,tsx}";
+@source "../src/hooks/**/*.{jsx,tsx}";
 @source "../pages/**/*.jsx";
 @source "../pages/**/*.tsx";
 
@@ -46,35 +48,6 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-.dark {
-  --background: oklch(0.13 0.02 260);
-  --foreground: oklch(0.95 0.01 90);
-  --card: oklch(0.18 0.02 260);
-  --card-foreground: oklch(0.95 0.01 90);
-  --popover: oklch(0.18 0.02 260);
-  --popover-foreground: oklch(0.95 0.01 90);
-  --primary: oklch(0.65 0.25 25);
-  --primary-foreground: oklch(0.13 0.02 260);
-  --secondary: oklch(0.22 0.02 260);
-  --secondary-foreground: oklch(0.95 0.01 90);
-  --muted: oklch(0.22 0.02 260);
-  --muted-foreground: oklch(0.65 0.01 90);
-  --accent: oklch(0.65 0.25 25);
-  --accent-foreground: oklch(0.13 0.02 260);
-  --destructive: oklch(0.55 0.2 25);
-  --destructive-foreground: oklch(0.95 0.01 90);
-  --border: oklch(0.28 0.02 260);
-  --input: oklch(0.22 0.02 260);
-  --ring: oklch(0.65 0.25 25);
-  --sidebar: oklch(0.145 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.985 0 0);
-  --sidebar-primary-foreground: oklch(0.205 0 0);
-  --sidebar-accent: oklch(0.22 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.28 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
-}
 
 @theme inline {
   --font-sans: "Inter", "Inter Fallback", system-ui, sans-serif;
@@ -115,6 +88,11 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-dark-bg: #1a1a1a;
+  --color-dark-surface: #2d2d2d;
+  --color-dark-border: #404040;
+  --color-dark-text: #e0e0e0;
+  --color-dark-muted: #a0a0a0;
 }
 
 @layer base {

@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Head from 'next/head';
+import dynamic from 'next/dynamic';
 import Layout from '@components/layout';
-import ReactJsonView from '@microlink/react-json-view';
+const JsonView = dynamic(() => import('@uiw/react-json-view').then(mod => mod.default || mod), { ssr: false });
 
 const EXAMPLE_QUERIES = [
   { label: 'Select All', query: '@', description: 'Return entire JSON' },
@@ -52,7 +53,7 @@ export default function JsonQuery() {
     setResult(null);
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('fileInfo', file);
     formData.append('query', query);
 
     try {
@@ -149,6 +150,9 @@ export default function JsonQuery() {
                     <p className="mt-2 text-sm text-gray-600 dark:text-dark-muted">
                       Drop JSON file or click to browse
                     </p>
+                    <p className="mt-1 text-xs text-muted-foreground/70">
+                      Files are automatically deleted after 30 minutes.
+                    </p>
                   </div>
                 )}
               </div>
@@ -227,16 +231,11 @@ export default function JsonQuery() {
                   Query Results
                 </h3>
                 <div className="border dark:border-dark-border rounded-lg overflow-hidden">
-                  <ReactJsonView
-                    src={result.result}
-                    theme="rjv-default"
+                  <JsonView
+                    value={result.result || null}
                     collapsed={2}
-                    displayDataTypes={false}
-                    displayObjectSize={true}
-                    enableClipboard={true}
                     style={{
                       padding: '1rem',
-                      backgroundColor: 'var(--bg-surface)',
                       fontSize: '0.875rem',
                     }}
                   />

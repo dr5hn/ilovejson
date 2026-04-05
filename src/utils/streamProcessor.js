@@ -1,6 +1,6 @@
-const fs = require('fs');
-const { Transform } = require('stream');
-const { pipeline } = require('stream/promises');
+import fs from 'fs';
+import { Transform } from 'stream';
+import { pipeline } from 'stream/promises';
 
 // File size thresholds
 const STREAMING_THRESHOLD = 10 * 1024 * 1024; // 10MB
@@ -182,7 +182,7 @@ function validateFileSize(filePath, maxSize) {
   return stats.size;
 }
 
-module.exports = {
+export {
   processLargeFile,
   processSync,
   processLargeSync,

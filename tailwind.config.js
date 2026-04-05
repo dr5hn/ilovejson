@@ -1,23 +1,4 @@
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  darkMode: 'class',
-  content: [
-    './src/components/**/*.jsx',
-    './src/contexts/**/*.jsx',
-    './pages/**/*.jsx'
-  ],
-  theme: {
-    extend: {
-      colors: {
-        dark: {
-          bg: '#1a1a1a',
-          surface: '#2d2d2d',
-          border: '#404040',
-          text: '#e0e0e0',
-          muted: '#a0a0a0',
-        }
-      }
-    },
-  },
-  plugins: [],
-}
+// Tailwind v4 uses CSS-based configuration in styles/tailwind.css
+// This file is intentionally empty — all config lives in @theme inline blocks
+// See: styles/tailwind.css
+module.exports = {}

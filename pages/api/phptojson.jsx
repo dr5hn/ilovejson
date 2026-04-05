@@ -1,13 +1,14 @@
 import { initDirs } from '@utils/initdir';
 import { globals } from '@constants/globals';
-import { ReS } from '@utils/reusables';
+import { ReS, ReE } from '@utils/reusables';
 import { runMiddleware } from '@middleware/apiMiddleware';
 import { validateMethod } from '@middleware/methodValidation';
 import { rateLimit } from '@middleware/rateLimit';
 import { parseFile } from '@middleware/fileParser';
 import { errorHandler } from '@middleware/errorHandler';
+import { getToolLimits } from '@constants/limits';
 
-const fs = require('fs');
+import fs from 'fs';
 initDirs();
 
 const uploadDir = globals.uploadDir + '/phptojson';
@@ -170,12 +171,12 @@ async function handler(req, res) {
   await runMiddleware(req, res, [
     validateMethod(['POST']),
     rateLimit({ maxRequests: 20, windowMs: 60000 }),
-    parseFile(uploadDir, { maxFileSize: 104857600 }),
+    parseFile(uploadDir, { maxFileSize: getToolLimits('phptojson').maxFileSize }),
   ]);
 
   // ✅ Guard against missing file
   if (!req.uploadedFile?.path) {
-    return res.status(400).json({ error: 'No file uploaded.' });
+    return ReE(res, 'No file uploaded.', 400);
   }
 
   const phpRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
@@ -188,7 +189,7 @@ async function handler(req, res) {
 
   // ✅ Return proper error response instead of throwing
   if (!phpArrayMatch) {
-    return res.status(422).json({ error: 'Invalid PHP file. No valid array assignment found.' });
+    return ReE(res, 'Invalid PHP file. No valid array assignment found.', 422);
   }
 
   let arrayStart = phpRead.indexOf('[', phpArrayMatch.index);
@@ -202,7 +203,7 @@ async function handler(req, res) {
   }
 
   if (arrayStart === -1) {
-    return res.status(422).json({ error: 'Invalid PHP file. Could not locate array content.' });
+    return ReE(res, 'Invalid PHP file. Could not locate array content.', 422);
   }
 
   // ✅ Proper escape-aware brace counting

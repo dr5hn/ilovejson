@@ -9,28 +9,28 @@ I ❤️ JSON is a Next.js web application that provides JSON conversion and uti
 ## Development Commands
 
 ```bash
-# Install dependencies (uses yarn)
-yarn
+# Install dependencies
+npm install
 
 # Start development server (runs on port 3002)
-yarn dev
+npm run dev
 
 # Build for production
-yarn build
+npm run build
 
 # Start production server (runs on port 3000)
-yarn start
+npm start
 
 # Run linting
-yarn lint
+npm run lint
 
 # Fix linting issues
-yarn lint:fix
+npm run lint:fix
 
 # Database commands (requires DATABASE_URL in .env)
-yarn prisma generate      # Generate Prisma client
-yarn prisma migrate dev   # Run migrations
-yarn prisma studio        # Open database GUI
+npx prisma generate      # Generate Prisma client
+npx prisma migrate dev   # Run migrations
+npx prisma studio        # Open database GUI
 
 # Run with Docker
 docker-compose up
@@ -181,7 +181,7 @@ Setup requires: PostgreSQL database, `DATABASE_URL`, `NEXTAUTH_SECRET`, and at l
 ## Requirements
 
 - Node.js v22.x or higher (enforced via package.json engines)
-- Yarn package manager
+- npm package manager
 - Uses Next.js 16 with React 19
 - Tailwind CSS 4.x for styling
 - PostgreSQL (optional, for authentication features)

@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { Header } from "@components/Header"
 import { Footer } from "@components/Footer"
 import { Check, Zap, Crown, Sparkles, ArrowRight, Shield, Clock, Server } from "lucide-react"
@@ -10,99 +9,63 @@ import Head from "next/head"
 const plans = [
   {
     name: "Free",
-    description: "Perfect for occasional use",
+    description: "Everything you need, completely free",
     price: { monthly: 0, yearly: 0 },
-    popular: false,
-    features: [
-      "All basic conversions",
-      "Up to 5MB file size",
-      "20 conversions per day",
-      "Standard processing speed",
-      "Files deleted after 1 hour",
-      "Community support",
-    ],
-    limitations: [
-      "Ads displayed",
-      "No batch processing",
-      "No API access",
-    ],
-    cta: "Get Started Free",
-    ctaHref: "/api/auth/signin",
-    icon: Zap,
-    color: "from-slate-500 to-slate-600",
-  },
-  {
-    name: "Pro",
-    description: "For power users and developers",
-    price: { monthly: 9.99, yearly: 79 },
     popular: true,
     features: [
-      "Everything in Free",
-      "100MB file size limit",
-      "Unlimited conversions",
-      "Priority processing",
-      "No ads",
-      "Files stored for 7 days",
-      "API access (10,000 req/mo)",
-      "Batch processing (50 files)",
-      "Custom workflows (10 saved)",
-      "Email support",
+      "All 20+ conversion tools",
+      "All utility tools (diff, merge, query, faker)",
+      "Up to 100MB file size",
+      "20 requests per minute",
+      "Keyboard shortcuts",
+      "No signup required",
     ],
     limitations: [],
-    cta: "Start Pro Trial",
-    ctaHref: "/api/auth/signin?plan=pro",
-    icon: Crown,
+    cta: "Start Converting",
+    ctaHref: "/",
+    icon: Zap,
     color: "from-red-500 to-rose-600",
   },
   {
-    name: "Lifetime",
-    description: "One-time payment, forever access",
-    price: { monthly: 199, yearly: 199 },
+    name: "Pro",
+    description: "Coming soon for power users",
+    price: { monthly: 9.99, yearly: 79 },
     popular: false,
-    isLifetime: true,
     features: [
-      "Everything in Pro, forever",
-      "No recurring payments",
-      "Early adopter badge",
-      "Priority feature requests",
-      "Exclusive Discord access",
-      "Future features included",
+      "Everything in Free",
+      "REST API access",
+      "Higher rate limits",
+      "Batch processing",
+      "Priority support",
     ],
     limitations: [],
-    cta: "Get Lifetime Access",
-    ctaHref: "/api/auth/signin?plan=lifetime",
-    icon: Sparkles,
-    color: "from-amber-500 to-orange-600",
+    cta: "Coming Soon",
+    ctaHref: "#",
+    icon: Crown,
+    color: "from-slate-500 to-slate-600",
   },
-]
-
-const apiPlans = [
-  { name: "Starter", requests: "5,000", price: 19 },
-  { name: "Growth", requests: "50,000", price: 49 },
-  { name: "Scale", requests: "500,000", price: 199 },
 ]
 
 const faqs = [
   {
-    q: "Can I cancel my subscription anytime?",
-    a: "Yes, you can cancel your Pro subscription at any time. You'll continue to have access until the end of your billing period.",
+    q: "Is I Love JSON really free?",
+    a: "Yes! All tools are completely free with no signup required. We plan to offer a Pro tier in the future for power users who need API access and higher limits.",
   },
   {
     q: "What happens to my files after processing?",
-    a: "Free users' files are deleted after 1 hour. Pro users' files are stored for 7 days. You can manually delete files anytime.",
+    a: "Files are automatically deleted within minutes of processing. We do not store or analyze your data.",
   },
   {
-    q: "Is there a free trial for Pro?",
-    a: "Yes! Pro comes with a 7-day free trial. No credit card required to start.",
+    q: "Are there any usage limits?",
+    a: "Free users can make 20 requests per minute with files up to 100MB. This is plenty for individual use.",
   },
   {
-    q: "What's included in the Lifetime deal?",
-    a: "Lifetime includes everything in Pro, forever. No recurring payments, and you get all future features and updates.",
+    q: "When will Pro be available?",
+    a: "We are actively building the Pro tier with API access and batch processing. Sign up for updates on our GitHub.",
   },
 ]
 
 export default function PricingPage() {
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly")
 
   return (
     <>
@@ -126,37 +89,18 @@ export default function PricingPage() {
               Start free and upgrade when you need more. Handle what AI can't: large files, batch processing, and guaranteed privacy.
             </p>
 
-            {/* Billing Toggle */}
-            <div className="inline-flex items-center gap-4 p-1.5 bg-secondary rounded-full">
-              <button
-                onClick={() => setBillingCycle("monthly")}
-                className={`px-6 py-2.5 text-sm font-medium rounded-full transition-all duration-300 ${
-                  billingCycle === "monthly"
-                    ? "bg-card text-foreground shadow-md"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setBillingCycle("yearly")}
-                className={`px-6 py-2.5 text-sm font-medium rounded-full transition-all duration-300 flex items-center gap-2 ${
-                  billingCycle === "yearly"
-                    ? "bg-card text-foreground shadow-md"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Yearly
-                <span className="px-2 py-0.5 bg-green-500/10 text-green-600 text-xs font-bold rounded-full">
-                  Save 34%
-                </span>
-              </button>
+            {/* Billing note */}
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-secondary rounded-full text-sm text-muted-foreground">
+              Pro pricing coming soon
+              <span className="px-2 py-0.5 bg-green-500/10 text-green-600 text-xs font-bold rounded-full">
+                Free today
+              </span>
             </div>
           </section>
 
           {/* Pricing Cards */}
           <section className="max-w-6xl mx-auto px-4 mb-24">
-            <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+            <div className="grid md:grid-cols-2 gap-6 lg:gap-8 max-w-3xl mx-auto">
               {plans.map((plan, idx) => (
                 <div
                   key={plan.name}
@@ -186,24 +130,14 @@ export default function PricingPage() {
                   </div>
 
                   <div className="mb-8">
-                    {plan.isLifetime ? (
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-5xl font-black text-foreground">${plan.price.monthly}</span>
-                        <span className="text-muted-foreground">one-time</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-5xl font-black text-foreground">
-                          ${billingCycle === "yearly" ? Math.round(plan.price.yearly / 12) : plan.price.monthly}
-                        </span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-5xl font-black text-foreground">
+                        {plan.price.monthly === 0 ? "Free" : `$${plan.price.monthly}`}
+                      </span>
+                      {plan.price.monthly > 0 && (
                         <span className="text-muted-foreground">/month</span>
-                      </div>
-                    )}
-                    {!plan.isLifetime && plan.price.yearly > 0 && billingCycle === "yearly" && (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Billed ${plan.price.yearly}/year
-                      </p>
-                    )}
+                      )}
+                    </div>
                   </div>
 
                   <Link
@@ -236,29 +170,6 @@ export default function PricingPage() {
                       </div>
                     ))}
                   </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* API Pricing */}
-          <section className="max-w-4xl mx-auto px-4 mb-24">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-foreground mb-4">API Pricing</h2>
-              <p className="text-muted-foreground">Build powerful integrations with our REST API</p>
-            </div>
-            <div className="grid md:grid-cols-3 gap-6">
-              {apiPlans.map((plan) => (
-                <div
-                  key={plan.name}
-                  className="bg-card border border-border rounded-2xl p-6 text-center hover:border-red-500/30 transition-all duration-300 hover:-translate-y-1"
-                >
-                  <h3 className="text-lg font-bold text-foreground mb-2">{plan.name}</h3>
-                  <p className="text-3xl font-black text-foreground mb-1">${plan.price}</p>
-                  <p className="text-sm text-muted-foreground mb-4">/month</p>
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-semibold text-foreground">{plan.requests}</span> requests/month
-                  </p>
                 </div>
               ))}
             </div>

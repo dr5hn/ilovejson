@@ -6,8 +6,9 @@ import { validateMethod } from '@middleware/methodValidation';
 import { rateLimit } from '@middleware/rateLimit';
 import { parseFile } from '@middleware/fileParser';
 import { errorHandler } from '@middleware/errorHandler';
+import { getToolLimits } from '@constants/limits';
 
-const fs = require('fs');
+import fs from 'fs';
 initDirs();
 
 const uploadDir = globals.uploadDir + '/jsontosql';
@@ -32,6 +33,11 @@ function escapeValue(value) {
   return `'${String(value).replace(/'/g, "''")}'`;
 }
 
+function escapeIdentifier(name) {
+  // Quote identifiers with double-quotes (ANSI SQL) and escape any embedded double-quotes
+  return `"${String(name).replace(/"/g, '""')}"`;
+}
+
 function jsonToSQL(jsonData, tableName = 'data') {
   if (!Array.isArray(jsonData)) {
     jsonData = [jsonData];
@@ -45,10 +51,11 @@ function jsonToSQL(jsonData, tableName = 'data') {
 
   for (const row of jsonData) {
     const columns = Object.keys(row);
+    const quotedColumns = columns.map(escapeIdentifier);
     const values = columns.map((col) => escapeValue(row[col]));
 
     statements.push(
-      `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES (${values.join(', ')});`
+      `INSERT INTO ${escapeIdentifier(tableName)} (${quotedColumns.join(', ')}) VALUES (${values.join(', ')});`
     );
   }
 
@@ -59,7 +66,7 @@ async function handler(req, res) {
   await runMiddleware(req, res, [
     validateMethod(['POST']),
     rateLimit({ maxRequests: 20, windowMs: 60000 }),
-    parseFile(uploadDir, { maxFileSize: 104857600 }),
+    parseFile(uploadDir, { maxFileSize: getToolLimits('jsontosql').maxFileSize }),
   ]);
 
   // ✅ Guard against missing file
@@ -70,9 +77,9 @@ async function handler(req, res) {
   const jsonRead = fs.readFileSync(req.uploadedFile.path, 'utf8');
   const jsonData = JSON.parse(jsonRead);
 
-  // ✅ Fix fields lookup — check req.body/req.fields, not req.uploadedFile.fields
-  // ✅ Sanitize tableName to prevent SQL injection
-  const rawName = req.body?.tableName || req.fields?.tableName || 'data';
+  // Read tableName from formidable-parsed fields (req.body is undefined when bodyParser: false)
+  const tableField = req.uploadedFile?.fields?.tableName;
+  const rawName = (Array.isArray(tableField) ? tableField[0] : tableField) || 'data';
   const tableName = rawName.replace(/[^a-zA-Z0-9_]/g, '_');
 
   const sqlOutput = jsonToSQL(jsonData, tableName);

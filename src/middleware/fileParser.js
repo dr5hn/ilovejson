@@ -5,6 +5,7 @@
  * Handles file uploads, validation, and attaches file info to request.
  */
 
+import path from 'path';
 import { IncomingForm } from 'formidable';
 import { ReE } from '@utils/reusables';
 
@@ -65,6 +66,13 @@ export const parseFile = (uploadDir, options = {}) => {
 
       if (!filePath) {
         return ReE(res, 'I ❤️ JSON. But I couldn\'t find the file path.', 400);
+      }
+
+      // Validate file path is within the expected upload directory (prevent path traversal)
+      const resolvedUploadDir = path.resolve(uploadDir);
+      const resolvedFilePath = path.resolve(filePath);
+      if (!resolvedFilePath.startsWith(resolvedUploadDir + path.sep) && resolvedFilePath !== resolvedUploadDir) {
+        return ReE(res, 'Invalid file path.', 400);
       }
 
       // Attach file info to request for next middleware

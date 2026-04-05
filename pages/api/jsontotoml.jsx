@@ -1,14 +1,15 @@
 import { initDirs } from '@utils/initdir';
 import { globals } from '@constants/globals';
-import TOML from '@iarna/toml';
+import { stringify as tomlStringify } from 'smol-toml';
 import { ReS, ReE } from '@utils/reusables';
 import { runMiddleware } from '@middleware/apiMiddleware';
 import { validateMethod } from '@middleware/methodValidation';
 import { rateLimit } from '@middleware/rateLimit';
 import { parseFile } from '@middleware/fileParser';
 import { errorHandler } from '@middleware/errorHandler';
+import { getToolLimits } from '@constants/limits';
 
-const fs = require('fs');
+import fs from 'fs';
 initDirs();
 
 const uploadDir = globals.uploadDir + '/jsontotoml';
@@ -24,12 +25,12 @@ async function handler(req, res) {
   await runMiddleware(req, res, [
     validateMethod(['POST']),
     rateLimit({ maxRequests: 20, windowMs: 60000 }),
-    parseFile(uploadDir, { maxFileSize: 104857600 }),
+    parseFile(uploadDir, { maxFileSize: getToolLimits('jsontotoml').maxFileSize }),
   ]);
 
   // ✅ Guard against missing file
   if (!req.uploadedFile?.path) {
-    return res.status(400).json({ error: 'No file uploaded.' });
+    return ReE(res, 'No file uploaded.', 400);
   }
 
   // ✅ Handle invalid JSON gracefully
@@ -52,7 +53,7 @@ async function handler(req, res) {
   // ✅ Handle TOML.stringify errors (e.g. null values, mixed-type arrays)
   let tomlOutput;
   try {
-    tomlOutput = TOML.stringify(tomlInput);
+    tomlOutput = tomlStringify(tomlInput);
   } catch (err) {
     return ReE(
       res,

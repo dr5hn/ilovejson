@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import Head from 'next/head';
+import dynamic from 'next/dynamic';
 import Layout from '@components/layout';
-import ReactJsonView from '@microlink/react-json-view';
+import { Dices, Plus, Trash2, Download, RotateCcw, Sparkles, Keyboard } from 'lucide-react';
+
+const JsonView = dynamic(() => import('@uiw/react-json-view').then(mod => mod.default || mod), { ssr: false });
+
+const FAKER_COLOR = '#ec4899';
 
 const FIELD_TYPES = [
   { value: 'name', label: 'Name', subtypes: ['fullName', 'firstName', 'lastName'] },
@@ -60,7 +65,6 @@ export default function JsonFaker() {
     setError(null);
     setResult(null);
 
-    // Build schema from fields
     const schema = {};
     fields.forEach(field => {
       schema[field.name] = {
@@ -143,255 +147,292 @@ export default function JsonFaker() {
         <meta name="description" content="Generate realistic fake JSON data for testing and development. Build custom schemas with various data types." />
       </Head>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-dark-text mb-4">
-            JSON Faker
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-dark-muted">
+      <div className="flex-1 flex flex-col min-h-[calc(100vh-200px)]">
+        {/* Title Section */}
+        <div className="text-center py-6 border-b border-border bg-muted/20">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg"
+              style={{ backgroundColor: FAKER_COLOR }}
+            >
+              <Dices className="w-5 h-5" />
+            </div>
+            <h1 className="text-2xl font-bold text-foreground">JSON Faker</h1>
+          </div>
+          <p className="text-muted-foreground text-sm">
             Generate realistic fake JSON data for testing and development
           </p>
         </div>
 
-        {!result && (
-          <div className="space-y-6">
-            {/* Templates */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text mb-2">
-                Quick Templates
-              </label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => loadTemplate('users')}
-                  className="px-4 py-2 text-sm bg-gray-100 dark:bg-dark-border text-gray-900 dark:text-dark-text rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                >
-                  Users
-                </button>
-                <button
-                  onClick={() => loadTemplate('products')}
-                  className="px-4 py-2 text-sm bg-gray-100 dark:bg-dark-border text-gray-900 dark:text-dark-text rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                >
-                  Products
-                </button>
-                <button
-                  onClick={() => loadTemplate('posts')}
-                  className="px-4 py-2 text-sm bg-gray-100 dark:bg-dark-border text-gray-900 dark:text-dark-text rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                >
-                  Blog Posts
-                </button>
-              </div>
-            </div>
-
-            {/* Schema Builder */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text">
-                  Schema Fields
-                </label>
-                <button
-                  onClick={addField}
-                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  + Add Field
-                </button>
-              </div>
-
-              {fields.length === 0 ? (
-                <div className="p-8 border-2 border-dashed dark:border-dark-border rounded-lg text-center">
-                  <p className="text-gray-500 dark:text-dark-muted">
-                    No fields yet. Add a field or use a template to get started.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {fields.map((field) => {
-                    const fieldType = FIELD_TYPES.find(t => t.value === field.type);
-                    const hasSubtypes = fieldType?.subtypes?.length > 0;
-                    const needsRange = field.type === 'number';
-
-                    return (
-                      <div key={field.id} className="p-4 border dark:border-dark-border rounded-lg bg-gray-50 dark:bg-dark-surface">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                          <input
-                            type="text"
-                            value={field.name}
-                            onChange={(e) => updateField(field.id, { name: e.target.value })}
-                            placeholder="Field name"
-                            className="px-3 py-2 border dark:border-dark-border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-dark-text text-sm"
-                          />
-
-                          <select
-                            value={field.type}
-                            onChange={(e) => updateField(field.id, { type: e.target.value, subtype: FIELD_TYPES.find(t => t.value === e.target.value)?.subtypes?.[0] || '' })}
-                            className="px-3 py-2 border dark:border-dark-border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-dark-text text-sm"
-                          >
-                            {FIELD_TYPES.map(type => (
-                              <option key={type.value} value={type.value}>{type.label}</option>
-                            ))}
-                          </select>
-
-                          {hasSubtypes && (
-                            <select
-                              value={field.subtype}
-                              onChange={(e) => updateField(field.id, { subtype: e.target.value })}
-                              className="px-3 py-2 border dark:border-dark-border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-dark-text text-sm"
-                            >
-                              {fieldType.subtypes.map(subtype => (
-                                <option key={subtype} value={subtype}>{subtype}</option>
-                              ))}
-                            </select>
-                          )}
-
-                          {needsRange && (
-                            <div className="flex gap-2">
-                              <input
-                                type="number"
-                                value={field.min}
-                                onChange={(e) => updateField(field.id, { min: parseInt(e.target.value) })}
-                                placeholder="Min"
-                                className="w-1/2 px-3 py-2 border dark:border-dark-border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-dark-text text-sm"
-                              />
-                              <input
-                                type="number"
-                                value={field.max}
-                                onChange={(e) => updateField(field.id, { max: parseInt(e.target.value) })}
-                                placeholder="Max"
-                                className="w-1/2 px-3 py-2 border dark:border-dark-border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-dark-text text-sm"
-                              />
-                            </div>
-                          )}
-
-                          <button
-                            onClick={() => removeField(field.id)}
-                            className="px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Generation Options */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text mb-2">
-                  Number of Records
-                </label>
-                <input
-                  type="number"
-                  value={count}
-                  onChange={(e) => setCount(Math.min(10000, Math.max(1, parseInt(e.target.value) || 1)))}
-                  min="1"
-                  max="10000"
-                  className="w-full px-4 py-2 border dark:border-dark-border rounded-lg bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text"
-                />
-                <p className="mt-1 text-xs text-gray-500 dark:text-dark-muted">
-                  Max: 10,000 records
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text mb-2">
-                  Seed (optional)
-                </label>
-                <input
-                  type="text"
-                  value={seed}
-                  onChange={(e) => setSeed(e.target.value)}
-                  placeholder="e.g., 12345"
-                  className="w-full px-4 py-2 border dark:border-dark-border rounded-lg bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text"
-                />
-                <p className="mt-1 text-xs text-gray-500 dark:text-dark-muted">
-                  Use same seed for reproducible data
-                </p>
-              </div>
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="p-4 border border-red-200 dark:border-red-900/50 rounded-lg bg-red-50 dark:bg-red-900/10">
-                <p className="text-red-700 dark:text-red-400">{error}</p>
-              </div>
-            )}
-
-            {/* Action Button */}
-            <div className="flex justify-center">
-              <button
-                onClick={handleGenerate}
-                disabled={fields.length === 0 || loading}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Generating...
-                  </span>
-                ) : (
-                  `Generate ${count} Records`
-                )}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Results */}
-        {result && (
-          <div className="space-y-6">
-            <div className="p-6 border border-green-200 dark:border-green-900/50 rounded-lg bg-green-50 dark:bg-green-900/10">
-              <div className="flex items-center justify-between mb-4">
+        {/* Content Area */}
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
+            {!result ? (
+              <div className="space-y-6">
+                {/* Templates */}
                 <div>
-                  <h3 className="text-lg font-medium text-green-900 dark:text-green-200">
-                    Generation Successful!
-                  </h3>
-                  <p className="text-green-700 dark:text-green-300">
+                  <label className="block text-sm font-semibold text-foreground mb-2">
+                    Quick Templates
+                  </label>
+                  <div className="flex gap-2">
+                    {['users', 'products', 'posts'].map((tmpl) => (
+                      <button
+                        key={tmpl}
+                        onClick={() => loadTemplate(tmpl)}
+                        className="px-4 py-2 text-sm bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors font-medium"
+                      >
+                        {tmpl === 'posts' ? 'Blog Posts' : tmpl.charAt(0).toUpperCase() + tmpl.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Schema Builder */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="block text-sm font-semibold text-foreground">
+                      Schema Fields
+                    </label>
+                    <button
+                      onClick={addField}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-white rounded-lg transition-colors font-medium"
+                      style={{ backgroundColor: FAKER_COLOR }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Field
+                    </button>
+                  </div>
+
+                  {fields.length === 0 ? (
+                    <div className="p-8 border-2 border-dashed border-border rounded-lg text-center">
+                      <Dices className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                      <p className="text-muted-foreground text-sm">
+                        No fields yet. Add a field or use a template to get started.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {fields.map((field) => {
+                        const fieldType = FIELD_TYPES.find(t => t.value === field.type);
+                        const hasSubtypes = fieldType?.subtypes?.length > 0;
+                        const needsRange = field.type === 'number';
+
+                        return (
+                          <div key={field.id} className="p-4 border border-border rounded-lg bg-card">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
+                              <input
+                                type="text"
+                                value={field.name}
+                                onChange={(e) => updateField(field.id, { name: e.target.value })}
+                                placeholder="Field name"
+                                className="px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+                              />
+
+                              <select
+                                value={field.type}
+                                onChange={(e) => updateField(field.id, { type: e.target.value, subtype: FIELD_TYPES.find(t => t.value === e.target.value)?.subtypes?.[0] || '' })}
+                                className="px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+                              >
+                                {FIELD_TYPES.map(type => (
+                                  <option key={type.value} value={type.value}>{type.label}</option>
+                                ))}
+                              </select>
+
+                              {hasSubtypes ? (
+                                <select
+                                  value={field.subtype}
+                                  onChange={(e) => updateField(field.id, { subtype: e.target.value })}
+                                  className="px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+                                >
+                                  {fieldType.subtypes.map(subtype => (
+                                    <option key={subtype} value={subtype}>{subtype}</option>
+                                  ))}
+                                </select>
+                              ) : needsRange ? (
+                                <div className="flex gap-2">
+                                  <input
+                                    type="number"
+                                    value={field.min}
+                                    onChange={(e) => updateField(field.id, { min: parseInt(e.target.value) })}
+                                    placeholder="Min"
+                                    className="w-1/2 px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+                                  />
+                                  <input
+                                    type="number"
+                                    value={field.max}
+                                    onChange={(e) => updateField(field.id, { max: parseInt(e.target.value) })}
+                                    placeholder="Max"
+                                    className="w-1/2 px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+                                  />
+                                </div>
+                              ) : (
+                                <div />
+                              )}
+
+                              <button
+                                onClick={() => removeField(field.id)}
+                                className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-md transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                Remove
+                              </button>
+                            </div>
+                            {needsRange && hasSubtypes && (
+                              <div className="flex gap-2 mt-3">
+                                <input
+                                  type="number"
+                                  value={field.min}
+                                  onChange={(e) => updateField(field.id, { min: parseInt(e.target.value) })}
+                                  placeholder="Min"
+                                  className="w-24 px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+                                />
+                                <input
+                                  type="number"
+                                  value={field.max}
+                                  onChange={(e) => updateField(field.id, { max: parseInt(e.target.value) })}
+                                  placeholder="Max"
+                                  className="w-24 px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Generation Options */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-foreground mb-2">
+                      Number of Records
+                    </label>
+                    <input
+                      type="number"
+                      value={count}
+                      onChange={(e) => setCount(Math.min(10000, Math.max(1, parseInt(e.target.value) || 1)))}
+                      min="1"
+                      max="10000"
+                      className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Max: 10,000 records
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-foreground mb-2">
+                      Seed (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={seed}
+                      onChange={(e) => setSeed(e.target.value)}
+                      placeholder="e.g., 12345"
+                      className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Use same seed for reproducible data
+                    </p>
+                  </div>
+                </div>
+
+                {/* Error Message */}
+                {error && (
+                  <div className="flex flex-col items-center text-center p-4 border border-red-200 dark:border-red-800 rounded-lg bg-red-50 dark:bg-red-950/20">
+                    <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950 flex items-center justify-center mb-2">
+                      <span className="text-red-500 text-lg">!</span>
+                    </div>
+                    <p className="text-red-500 text-sm font-medium">{error}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Results */
+              <div className="space-y-6">
+                <div className="p-6 border border-emerald-200 dark:border-emerald-800 rounded-lg bg-emerald-50 dark:bg-emerald-950/20">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="flex items-center gap-1 text-sm text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50 px-3 py-1 rounded-full font-medium">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Generation Successful!
+                    </span>
+                  </div>
+                  <p className="text-emerald-700 dark:text-emerald-300 text-sm mb-4">
                     {result.message}
                   </p>
+
+                  {/* Preview */}
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-foreground mb-2">
+                      Preview (first 3 records)
+                    </h4>
+                    <div className="border border-border rounded-lg overflow-hidden bg-card">
+                      <JsonView
+                        value={result.preview}
+                        collapsed={false}
+                        style={{
+                          padding: '1rem',
+                          fontSize: '0.875rem',
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleDownload}
+                      className="inline-flex items-center gap-2 px-6 py-3 text-white font-semibold rounded-xl transition-all shadow-lg hover:-translate-y-0.5"
+                      style={{
+                        backgroundColor: '#10b981',
+                        boxShadow: '0 8px 30px -8px #10b98166',
+                      }}
+                    >
+                      <Download className="w-4 h-4" />
+                      Download All {result.count} Records
+                    </button>
+                    <button
+                      onClick={handleReset}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-muted text-foreground font-semibold rounded-xl transition-all hover:-translate-y-0.5"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Generate More Data
+                    </button>
+                  </div>
                 </div>
               </div>
+            )}
+          </div>
+        </div>
 
-              {/* Preview */}
-              <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-700 dark:text-dark-text mb-2">
-                  Preview (first 3 records)
-                </h4>
-                <div className="border dark:border-dark-border rounded-lg overflow-hidden">
-                  <ReactJsonView
-                    src={result.preview}
-                    theme="rjv-default"
-                    collapsed={false}
-                    displayDataTypes={false}
-                    enableClipboard={true}
-                    style={{
-                      padding: '1rem',
-                      backgroundColor: 'var(--bg-surface)',
-                      fontSize: '0.875rem',
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <button
-                  onClick={handleDownload}
-                  className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
-                >
-                  Download All {result.count} Records
-                </button>
-                <button
-                  onClick={handleReset}
-                  className="px-6 py-3 bg-gray-200 dark:bg-dark-border text-gray-900 dark:text-dark-text rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
-                >
-                  Generate More Data
-                </button>
-              </div>
-            </div>
+        {/* Bottom Action Bar */}
+        {!result && (
+          <div className="flex items-center justify-center gap-4 px-4 py-4 border-t border-border bg-muted/20">
+            <button
+              onClick={handleGenerate}
+              disabled={fields.length === 0 || loading}
+              className="inline-flex items-center gap-2 px-8 py-3 text-white font-semibold rounded-xl transition-all shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+              style={{
+                backgroundColor: FAKER_COLOR,
+                boxShadow: `0 8px 30px -8px ${FAKER_COLOR}66`,
+              }}
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Dices className="w-4 h-4" />
+                  {`Generate ${count} Records`}
+                </>
+              )}
+            </button>
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Keyboard className="w-3.5 h-3.5" />
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">Ctrl+Enter</kbd>
+            </span>
           </div>
         )}
       </div>

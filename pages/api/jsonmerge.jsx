@@ -5,9 +5,10 @@ import { runMiddleware } from '@middleware/apiMiddleware';
 import { validateMethod } from '@middleware/methodValidation';
 import { rateLimit } from '@middleware/rateLimit';
 import { errorHandler } from '@middleware/errorHandler';
+import { getToolLimits } from '@constants/limits';
 import formidable from 'formidable';
 
-const fs = require('fs');
+import fs from 'fs';
 initDirs();
 
 const uploadDir = globals.uploadDir + '/jsonmerge';
@@ -59,11 +60,13 @@ async function handler(req, res) {
     rateLimit({ maxRequests: 20, windowMs: 60000 }),
   ]);
 
+  const limits = getToolLimits('jsonmerge');
+
   // Parse multiple files
   const form = formidable({
     uploadDir,
     keepExtensions: true,
-    maxFileSize: 104857600, // 100MB
+    maxFileSize: limits.maxFileSize,
     multiples: true,
   });
 
