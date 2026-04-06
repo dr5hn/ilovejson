@@ -102,4 +102,12 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [tabindex]:focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring rounded-sm;
+  }
 }

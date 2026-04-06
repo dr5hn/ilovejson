@@ -112,6 +112,20 @@ export function UtilityPage({
         <meta property="og:description" content={description} />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={description} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": title,
+              "description": description,
+              "applicationCategory": "DeveloperApplication",
+              "operatingSystem": "Any",
+              "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            })
+          }}
+        />
       </Head>
       <div className="w-full flex-1 flex flex-col min-h-[calc(100vh-200px)]">
         {/* Title Section */}

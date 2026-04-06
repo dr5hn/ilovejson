@@ -203,6 +203,21 @@ export function ConverterPage({
         <meta property="og:description" content={metaDescription} />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={metaDescription} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": `${fromFormat} to ${toFormat} Converter`,
+              "description": metaDescription,
+              "url": `https://www.ilovejson.com/${slug}`,
+              "applicationCategory": "DeveloperApplication",
+              "operatingSystem": "Any",
+              "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            })
+          }}
+        />
       </Head>
       <div className="flex-1 flex flex-col">
 

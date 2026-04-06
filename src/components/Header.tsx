@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { ChevronDown, Menu, X, Sparkles, Search, ArrowRight } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
+import { useRouter } from "next/router"
 
 const toolCategories = [
   {
@@ -57,16 +58,41 @@ const toolCategories = [
   },
 ]
 
+const allTools = toolCategories.flatMap(c => c.tools)
+
 export function Header() {
+  const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [megaMenuOpen, setMegaMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [mobileSearch, setMobileSearch] = useState("")
+  const megaMenuRef = useRef<HTMLDivElement>(null)
+  const megaMenuButtonRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10)
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  const handleMegaMenuKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      setMegaMenuOpen(false)
+      megaMenuButtonRef.current?.focus()
+    }
+  }, [])
+
+  const filteredMobileTools = mobileSearch.trim().length >= 2
+    ? allTools.filter(t => t.name.toLowerCase().includes(mobileSearch.toLowerCase()))
+    : null
+
+  const handleMobileSearchSubmit = () => {
+    if (filteredMobileTools && filteredMobileTools.length > 0) {
+      router.push(filteredMobileTools[0].href)
+      setMobileMenuOpen(false)
+      setMobileSearch("")
+    }
+  }
 
   return (
     <header
@@ -95,10 +121,16 @@ export function Header() {
         <nav className="hidden lg:flex items-center gap-1">
           <div
             className="relative"
+            ref={megaMenuRef}
             onMouseEnter={() => setMegaMenuOpen(true)}
             onMouseLeave={() => setMegaMenuOpen(false)}
+            onKeyDown={handleMegaMenuKeyDown}
           >
             <button
+              ref={megaMenuButtonRef}
+              onClick={() => setMegaMenuOpen(!megaMenuOpen)}
+              aria-expanded={megaMenuOpen}
+              aria-haspopup="true"
               className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full transition-all duration-300 ${
                 megaMenuOpen
                   ? "bg-red-500 text-white shadow-lg shadow-red-500/25"
@@ -116,6 +148,7 @@ export function Header() {
               className={`absolute top-full left-1/2 -translate-x-1/2 pt-4 transition-all duration-300 ${
                 megaMenuOpen ? "opacity-100 translate-y-0 visible" : "opacity-0 -translate-y-2 invisible"
               }`}
+              role="menu"
             >
               <div className="bg-card rounded-3xl shadow-2xl shadow-black/10 border border-border p-8 min-w-[800px]">
                 <div className="grid grid-cols-3 gap-2">
@@ -127,10 +160,10 @@ export function Header() {
                       </div>
                       <ul className="space-y-1">
                         {category.tools.map((tool) => (
-                          <li key={tool.href}>
+                          <li key={tool.href} role="menuitem">
                             <Link
                               href={tool.href}
-                              className="flex items-center gap-3 px-3 py-2.5 text-sm text-foreground hover:bg-secondary rounded-xl transition-all duration-200 group/item"
+                              className="flex items-center gap-3 px-3 py-2.5 text-sm text-foreground hover:bg-secondary rounded-xl transition-all duration-200 group/item focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               onClick={() => setMegaMenuOpen(false)}
                             >
                               <span
@@ -189,6 +222,7 @@ export function Header() {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="lg:hidden p-2.5 text-foreground hover:bg-secondary rounded-full transition-colors"
             aria-label="Toggle menu"
+            aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -201,22 +235,31 @@ export function Header() {
         }`}
       >
         <nav className="flex flex-col p-4 gap-2 max-h-[calc(100vh-80px)] overflow-y-auto">
-          {toolCategories.map((category, categoryIdx) => (
-            <div
-              key={category.title}
-              className="mb-4 animate-slide-up"
-              style={{ animationDelay: `${categoryIdx * 50}ms` }}
-            >
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 px-3">
-                {category.title}
-              </h3>
-              <div className="grid grid-cols-2 gap-2">
-                {category.tools.map((tool) => (
+          {/* Mobile Search */}
+          <div className="relative mb-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={mobileSearch}
+              onChange={(e) => setMobileSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleMobileSearchSubmit() }}
+              placeholder="Search tools..."
+              className="w-full pl-10 pr-4 py-2.5 text-sm bg-secondary rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+
+          {/* Search results or categories */}
+          {filteredMobileTools ? (
+            <div className="space-y-1">
+              {filteredMobileTools.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No tools found</p>
+              ) : (
+                filteredMobileTools.map((tool) => (
                   <Link
                     key={tool.href}
                     href={tool.href}
                     className="flex items-center gap-3 px-3 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
+                    onClick={() => { setMobileMenuOpen(false); setMobileSearch(""); }}
                   >
                     <span
                       className="w-8 h-8 aspect-square rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0"
@@ -226,33 +269,47 @@ export function Header() {
                     </span>
                     <span className="truncate">{tool.name}</span>
                   </Link>
-                ))}
-              </div>
+                ))
+              )}
             </div>
-          ))}
-          <div className="border-t border-border mt-2 pt-4 flex flex-col gap-2">
-            <Link
-              href="/cli"
-              className="block w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl text-center transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              CLI
-            </Link>
-            <Link
-              href="/pricing"
-              className="block w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl text-center transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Pricing
-            </Link>
-            <Link
-              href="/api-docs"
-              className="block w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl text-center transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              API
-            </Link>
-          </div>
+          ) : (
+            <>
+              {toolCategories.map((category, categoryIdx) => (
+                <div
+                  key={category.title}
+                  className="mb-4 animate-slide-up"
+                  style={{ animationDelay: `${categoryIdx * 50}ms` }}
+                >
+                  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 px-3">
+                    {category.title}
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {category.tools.map((tool) => (
+                      <Link
+                        key={tool.href}
+                        href={tool.href}
+                        className="flex items-center gap-3 px-3 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl transition-colors"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <span
+                          className="w-8 h-8 aspect-square rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0"
+                          style={{ backgroundColor: tool.color }}
+                        >
+                          {tool.icon}
+                        </span>
+                        <span className="truncate">{tool.name}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <div className="border-t border-border mt-2 pt-4 flex flex-col gap-2">
+                <Link href="/cli" className="block w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl text-center transition-colors" onClick={() => setMobileMenuOpen(false)}>CLI</Link>
+                <Link href="/pricing" className="block w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl text-center transition-colors" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
+                <Link href="/api-docs" className="block w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl text-center transition-colors" onClick={() => setMobileMenuOpen(false)}>API</Link>
+              </div>
+            </>
+          )}
         </nav>
       </div>
     </header>
