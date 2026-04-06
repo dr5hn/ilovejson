@@ -10,6 +10,7 @@ const Viewer = () => {
   const [sourceJSON, setSourceJSON] = useState('');
   const [outputJSON, setOutputJSON] = useState(null);
   const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleChange = (e) => {
     const value = e.target.value;
@@ -18,12 +19,13 @@ const Viewer = () => {
       if (value.trim()) {
         setOutputJSON(JSON.parse(value));
         setShowError(false);
+        setErrorMessage('');
       } else {
         setOutputJSON(null);
       }
-    } catch {
+    } catch (err) {
+      setErrorMessage(err.message || 'Invalid JSON');
       setShowError(true);
-      setTimeout(() => setShowError(false), 5000);
     }
   };
 
@@ -36,12 +38,12 @@ const Viewer = () => {
       <div className="app mt-5 w-full h-full p-8 font-sans">
         <div className="row sm:flex">
           <div className="col sm:w-1/2">
-            <div className="box border rounded flex flex-col shadow bg-white dark:bg-dark-surface dark:border-dark-border box-height">
-              <div className="box__title bg-grey-lighter dark:bg-dark-border px-3 py-2 border-b dark:border-dark-border">
-                <h3 className="text-sm text-grey-darker dark:text-dark-text font-medium">Input</h3>
+            <div className="box border rounded flex flex-col shadow bg-white box-height">
+              <div className="box__title bg-grey-lighter px-3 py-2 border-b">
+                <h3 className="text-sm text-grey-darker font-medium">Input</h3>
               </div>
               <textarea
-                className="resize-none border-0 rounded text-grey-darkest dark:text-dark-text flex-1 p-2 m-1 bg-transparent"
+                className="resize-none border-0 rounded text-grey-darkest flex-1 p-2 m-1 bg-transparent"
                 name="source"
                 value={sourceJSON}
                 onChange={handleChange}
@@ -51,9 +53,9 @@ const Viewer = () => {
           </div>
 
           <div className="col mt-8 sm:ml-8 sm:mt-0 sm:w-1/2">
-            <div className="box border rounded flex flex-col shadow bg-white dark:bg-dark-surface dark:border-dark-border box-height">
-              <div className="box__title bg-grey-lighter dark:bg-dark-border px-3 py-2 border-b dark:border-dark-border">
-                <h3 className="text-sm text-grey-darker dark:text-dark-text font-medium inline-flex">Output</h3>
+            <div className="box border rounded flex flex-col shadow bg-white box-height">
+              <div className="box__title bg-grey-lighter px-3 py-2 border-b">
+                <h3 className="text-sm text-grey-darker font-medium inline-flex">Output</h3>
               </div>
               <div style={{ overflowY: 'scroll', height: '50vh', padding: '0.5rem' }}>
                 {outputJSON !== null ? (
@@ -70,7 +72,7 @@ const Viewer = () => {
           </div>
         </div>
 
-        <AlertError message="You've entered invalid JSON." showError={showError} />
+        <AlertError message={errorMessage} showError={showError} onDismiss={() => setShowError(false)} />
       </div>
     </Layout>
   );

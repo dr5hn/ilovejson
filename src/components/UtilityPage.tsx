@@ -136,6 +136,14 @@ export function UtilityPage({
               <span className="text-sm font-semibold text-foreground">Source</span>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground">{input.length.toLocaleString()} chars</span>
+                {!input && (
+                  <button
+                    onClick={() => setInput(JSON.stringify({ name: "John Doe", email: "john@example.com", age: 30, address: { street: "123 Main St", city: "Springfield", state: "IL" }, hobbies: ["reading", "coding", "hiking"] }, null, 2))}
+                    className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition"
+                  >
+                    Load example
+                  </button>
+                )}
                 {input && (
                   <button
                     onClick={handleClear}
