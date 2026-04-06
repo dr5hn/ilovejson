@@ -178,9 +178,33 @@ The app includes optional NextAuth.js authentication with OAuth providers (Googl
 
 Setup requires: PostgreSQL database, `DATABASE_URL`, `NEXTAUTH_SECRET`, and at least one OAuth provider configured in `.env` (see `.env.example`).
 
+## Build & Deploy
+
+- `next.config.js` skips TypeScript and ESLint checks during build (`ignoreBuildErrors`, `ignoreDuringBuilds`) to prevent OOM
+- CI runs on Node 25 with `NODE_OPTIONS="--max-old-space-size=4096"` as safety net
+- Deploy workflow uses `appleboy/ssh-action@v1` to SSH into server, pull, build, and PM2 reload
+- File cleanup: `crontab.conf` purges uploads/downloads older than 30 minutes (install with `crontab crontab.conf` on server)
+- Sitemap: dynamically generated at `/sitemap.xml`
+
+## UI Components
+
+Only `src/components/ui/button.tsx` remains from the original shadcn/ui install. All other UI primitives were removed as unused. The Button depends on `@radix-ui/react-slot` and `@lib/utils` (cn helper).
+
+## Dark Mode
+
+Dark mode has been removed. The `.dark` CSS variables block was deleted from `tailwind.css`. Remaining `dark:` prefixed classes in some components are inert (no `.dark` class is ever applied to the root). ThemeProvider and ThemeToggle have been deleted.
+
+## Authentication
+
+Auth UI (sign-in buttons, UserMenu) is hidden but all auth code is retained for future use:
+- NextAuth.js config in `src/lib/auth.js`
+- Auth API route at `pages/api/auth/[...nextauth].js`
+- Dashboard pages at `pages/dashboard/`
+- Prisma schema with User, Conversion, SavedFile models
+
 ## Requirements
 
-- Node.js v22.x or higher (enforced via package.json engines)
+- Node.js v25.x or higher (enforced via package.json engines)
 - npm package manager
 - Uses Next.js 16 with React 19
 - Tailwind CSS 4.x for styling
