@@ -1,0 +1,38 @@
+name: WW CI Status to Trello
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: ["ww/**"]
+
+jobs:
+  notify-trello:
+    if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract card ID from branch name
+        id: extract
+        run: |
+          branch="${{ github.event.workflow_run.head_branch }}"
+          card_id=$(echo "$branch" | sed -n 's|ww/[^/]*/\([^-]*\)-.*|\1|p')
+          echo "card_id=$card_id" >> "$GITHUB_OUTPUT"
+      - name: Post CI status to Trello
+        env:
+          TRELLO_KEY: ${{ secrets.TRELLO_KEY }}
+          TRELLO_TOKEN: ${{ secrets.TRELLO_TOKEN }}
+          STATUS: ${{ github.event.workflow_run.conclusion }}
+          DETAILS_URL: ${{ github.event.workflow_run.html_url }}
+          CARD_ID: ${{ steps.extract.outputs.card_id }}
+        run: |
+          if [ -z "$CARD_ID" ]; then
+            echo "Could not extract card ID from branch — skipping"
+            exit 0
+          fi
+          if [ "$STATUS" = "success" ]; then
+            BODY="CI-passed: $DETAILS_URL"
+          else
+            BODY="CI-failed ($STATUS): $DETAILS_URL"
+          fi
+          curl -fsS -X POST "https://api.trello.com/1/cards/$CARD_ID/actions/comments" \
+            -d "key=$TRELLO_KEY&token=$TRELLO_TOKEN&text=$BODY"
