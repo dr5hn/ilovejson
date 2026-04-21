@@ -5,13 +5,19 @@
   "main": "index.js",
   "private": true,
   "dependencies": {
+    "@auth/prisma-adapter": "2.11.1",
     "@microlink/react-json-view": "^1.23.0",
     "@prantlf/jsonlint": "^16.0.0",
+    "@prisma/adapter-pg": "7.5.0",
+    "@prisma/client-runtime-utils": "7.2.0",
     "@tailwindcss/postcss": "4.1.16",
     "formidable": "^3.5.4",
     "generate-schema": "^2.6.0",
     "json-2-csv": "^5.5.10",
     "next": "16.0.10",
+    "next-auth": "4.24.13",
+    "nodemailer": "8.0.5",
+    "pg": "8.20.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-dropzone": "^14.3.8",
@@ -27,6 +33,7 @@
     "eslint-config-next": "16.0.10",
     "eslint-plugin-react": "^7.37.5",
     "postcss": "^8.5.6",
+    "prisma": "7.2.0",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3"
   },
@@ -35,8 +42,8 @@
     "build": "next build",
     "start": "next start -p 3000",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "next lint",
-    "lint:fix": "eslint --fix --ext .js,.jsx --ignore-path .eslintignore ."
+    "lint": "eslint src pages",
+    "lint:fix": "eslint --fix src pages"
   },
   "repository": {
     "type": "git",

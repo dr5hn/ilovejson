@@ -1,7 +1,8 @@
 import '../styles/index.css';
 import Head from 'next/head';
+import { SessionProvider } from 'next-auth/react';
 
-function MyApp({ Component, pageProps }) {
+function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   const og = pageProps.data?.og
   const title = pageProps.data?.title
 
@@ -37,7 +38,9 @@ function MyApp({ Component, pageProps }) {
         <meta name='theme-color' content='#FFFFFF' />
       </Head>
 
-      <Component {...pageProps} />
+      <SessionProvider session={session}>
+        <Component {...pageProps} />
+      </SessionProvider>
     </>
   )
 }

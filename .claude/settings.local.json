@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(DATABASE_URL=\"postgresql://darshan@localhost:5432/ilovejson\" npx prisma *)"
+    ]
+  }
+}

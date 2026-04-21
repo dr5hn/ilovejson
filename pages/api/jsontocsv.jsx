@@ -3,6 +3,7 @@ import { initDirs } from '@utils/initdir';
 import { globals } from '@constants/globals';
 import { json2csv } from 'json-2-csv';
 import { ReE, ReS } from '@utils/reusables';
+import { logConversion } from '@utils/logConversion';
 
 const fs = require('fs');
 initDirs();
@@ -71,6 +72,14 @@ export default async (req, res) => {
       fs.writeFileSync(outputFilePath, csv, 'utf8');
 
       let toPath = outputFilePath.replace('public/', '');
+
+      const infoEntry = Array.isArray(fileInfo) ? fileInfo[0] : fileInfo;
+      logConversion(req, res, {
+        tool: 'jsontocsv',
+        fileName: infoEntry.originalFilename || null,
+        inputSize: fs.statSync(infoEntry.filepath || infoEntry.path).size,
+        outputSize: fs.statSync(outputFilePath).size,
+      });
 
       return ReS(res, {
         message: 'I ❤️ JSON. JSON to CSV Conversion Successful.',

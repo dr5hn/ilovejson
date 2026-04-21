@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { useSession } from 'next-auth/react';
 
 import Layout from '@components/layout';
 import AlertError from '@components/error';
@@ -18,6 +19,8 @@ const Slug = ({ slug }) => {
   const [showError, setShowError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [converted, setConverted] = useState(false);
+  const [saveState, setSaveState] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
+  const { data: session } = useSession();
   const mimeType = (fileType?.length > 0) ? mimeTypes[fileType[0]]: mimeTypes.json;
 
   const maxSize = 1048576;
@@ -29,6 +32,31 @@ const Slug = ({ slug }) => {
       setDownloadFilename('');
       setConverted(false);
       setShowError(false);
+      setSaveState('idle');
+    }
+  };
+
+  const handleSave = async () => {
+    if (!downloadLink || saveState === 'saving' || saveState === 'saved') return;
+    setSaveState('saving');
+    try {
+      const res = await fetch('/api/saved-files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ downloadPath: downloadLink, tool: slug, name: downloadFilename }),
+      });
+      if (res.ok) {
+        setSaveState('saved');
+      } else {
+        const data = await res.json();
+        setErrorMessage(data.error || 'Failed to save file.');
+        setShowError(true);
+        setSaveState('error');
+        setTimeout(() => setSaveState('idle'), 4000);
+      }
+    } catch {
+      setSaveState('error');
+      setTimeout(() => setSaveState('idle'), 4000);
     }
   };
 
@@ -193,19 +221,14 @@ const Slug = ({ slug }) => {
           </div>
         )}
 
-        {/* Download Button - Show only after successful conversion */}
+        {/* Download + Save buttons - Show only after successful conversion */}
         {converted && downloadLink && !loading && (
-          <div className="row sm:flex mt-5">
-            <a 
-              href={downloadLink} 
+          <div className="row sm:flex mt-5 gap-3 justify-center flex-wrap">
+            <a
+              href={downloadLink}
               download={downloadFilename}
-              className='mx-auto'
               style={{ textDecoration: 'none' }}
-              onClick={() => {
-                setTimeout(() => {
-                  URL.revokeObjectURL(downloadLink);
-                }, 100);
-              }}
+              onClick={() => { setTimeout(() => URL.revokeObjectURL(downloadLink), 100) }}
             >
               <button className='bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg inline-flex items-center transition-colors duration-200'>
                 <svg className="fill-current w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -214,6 +237,20 @@ const Slug = ({ slug }) => {
                 <span>Download Converted File</span>
               </button>
             </a>
+
+            {session && (
+              <button
+                onClick={handleSave}
+                disabled={saveState === 'saving' || saveState === 'saved'}
+                className={`font-semibold py-3 px-6 rounded-lg shadow-lg inline-flex items-center transition-colors duration-200 ${
+                  saveState === 'saved'
+                    ? 'bg-indigo-400 text-white cursor-default'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                }`}
+              >
+                {saveState === 'saved' ? '✓ Saved' : saveState === 'saving' ? 'Saving…' : 'Save'}
+              </button>
+            )}
           </div>
         )}
       </div>

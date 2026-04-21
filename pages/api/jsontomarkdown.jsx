@@ -2,6 +2,7 @@ import { IncomingForm } from 'formidable';
 import { initDirs } from '@utils/initdir';
 import { globals } from '@constants/globals';
 import { ReE, ReS } from '@utils/reusables';
+import { logConversion } from '@utils/logConversion';
 
 const fs = require('fs');
 initDirs();
@@ -125,6 +126,14 @@ export default async (req, res) => {
       fs.writeFileSync(filePath, markdownContent, 'utf8');
 
       let toPath = filePath.replace('public/', '');
+
+      const infoEntry = Array.isArray(fileInfo) ? fileInfo[0] : fileInfo;
+      logConversion(req, res, {
+        tool: 'jsontomarkdown',
+        fileName: infoEntry.originalFilename || null,
+        inputSize: fs.statSync(infoEntry.filepath || infoEntry.path).size,
+        outputSize: fs.statSync(filePath).size,
+      });
 
       return ReS(res, {
         message: 'I ❤️ JSON. JSON to Markdown Conversion Successful.',

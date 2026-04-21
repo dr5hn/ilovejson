@@ -10,14 +10,41 @@ Ensure you have the following installed:
 Installing Dependencies
 To set up your environment, first install the necessary dependencies:
 ```bash
-yarn
+npm install
 ```
 
 Run Server
 To start the local server, run the following command:
 ```bash
-yarn dev
+npm run dev
 ```
+The dev server runs on **port 3002**.
+
+## Enabling Authentication (optional)
+
+Authentication is off by default. To enable it:
+
+1. Copy the example env file:
+   ```bash
+   cp .env.example .env.local
+   ```
+
+2. Set `DATABASE_URL` to a PostgreSQL connection string (e.g. [Neon](https://neon.tech), [Supabase](https://supabase.com), or local Postgres).
+
+3. Run Prisma migrations:
+   ```bash
+   DATABASE_URL=your-url npx prisma@7.2.0 migrate dev
+   ```
+
+4. Set `NEXTAUTH_SECRET` (generate one with `openssl rand -base64 32`).
+
+5. Add credentials for any providers you want:
+   - **Magic link** — set `EMAIL_SERVER` and `EMAIL_FROM`.  
+     **Dev shortcut**: leave these blank and magic links are printed to the server console instead.
+   - **Google OAuth** — set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+   - **GitHub OAuth** — set `GITHUB_ID` and `GITHUB_SECRET`.
+
+Providers not configured are silently skipped. The app works without auth for all conversion tools.
 
 Using Docker
 Alternatively, you can use Docker to start the project. This is especially useful for ensuring a consistent environment:

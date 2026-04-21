@@ -1,0 +1,57 @@
+﻿id,name,iso2,iso3,capital,region,subregion,population,area_km2,currency.code,currency.name,currency.symbol,languages,phone_code,tld
+1,Afghanistan,AF,AFG,Kabul,Asia,Southern Asia,40754388,652230,AFN,Afghan afghani,؋,"[""Pashto"",""Dari""]",+93,.af
+2,Albania,AL,ALB,Tirana,Europe,Southern Europe,2842321,28748,ALL,Albanian lek,L,"[""Albanian""]",+355,.al
+3,Algeria,DZ,DZA,Algiers,Africa,Northern Africa,44903225,2381741,DZD,Algerian dinar,د.ج,"[""Arabic"",""Tamazight"",""French""]",+213,.dz
+4,Argentina,AR,ARG,Buenos Aires,Americas,South America,45773884,2780400,ARS,Argentine peso,$,"[""Spanish""]",+54,.ar
+5,Australia,AU,AUS,Canberra,Oceania,Australia and New Zealand,25978935,7692024,AUD,Australian dollar,$,"[""English""]",+61,.au
+6,Austria,AT,AUT,Vienna,Europe,Western Europe,9132383,83871,EUR,Euro,€,"[""German""]",+43,.at
+7,Bangladesh,BD,BGD,Dhaka,Asia,Southern Asia,169356251,147570,BDT,Bangladeshi taka,৳,"[""Bengali""]",+880,.bd
+8,Belgium,BE,BEL,Brussels,Europe,Western Europe,11555997,30528,EUR,Euro,€,"[""Dutch"",""French"",""German""]",+32,.be
+9,Brazil,BR,BRA,Brasília,Americas,South America,215313498,8515767,BRL,Brazilian real,R$,"[""Portuguese""]",+55,.br
+10,Canada,CA,CAN,Ottawa,Americas,Northern America,38781292,9984670,CAD,Canadian dollar,$,"[""English"",""French""]",+1,.ca
+11,Chile,CL,CHL,Santiago,Americas,South America,19300000,756102,CLP,Chilean peso,$,"[""Spanish""]",+56,.cl
+12,China,CN,CHN,Beijing,Asia,Eastern Asia,1412600000,9596960,CNY,Chinese yuan,¥,"[""Mandarin Chinese""]",+86,.cn
+13,Colombia,CO,COL,Bogotá,Americas,South America,51874024,1141748,COP,Colombian peso,$,"[""Spanish""]",+57,.co
+14,Denmark,DK,DNK,Copenhagen,Europe,Northern Europe,5910913,43094,DKK,Danish krone,kr,"[""Danish""]",+45,.dk
+15,Egypt,EG,EGY,Cairo,Africa,Northern Africa,104258327,1002450,EGP,Egyptian pound,£,"[""Arabic""]",+20,.eg
+16,Ethiopia,ET,ETH,Addis Ababa,Africa,Eastern Africa,126527060,1104300,ETB,Ethiopian birr,Br,"[""Amharic""]",+251,.et
+17,Finland,FI,FIN,Helsinki,Europe,Northern Europe,5545475,338424,EUR,Euro,€,"[""Finnish"",""Swedish""]",+358,.fi
+18,France,FR,FRA,Paris,Europe,Western Europe,67813000,551695,EUR,Euro,€,"[""French""]",+33,.fr
+19,Germany,DE,DEU,Berlin,Europe,Western Europe,83408554,357114,EUR,Euro,€,"[""German""]",+49,.de
+20,Ghana,GH,GHA,Accra,Africa,Western Africa,33475870,238533,GHS,Ghanaian cedi,₵,"[""English""]",+233,.gh
+21,Greece,GR,GRC,Athens,Europe,Southern Europe,10718565,131957,EUR,Euro,€,"[""Greek""]",+30,.gr
+22,India,IN,IND,New Delhi,Asia,Southern Asia,1428627663,3287263,INR,Indian rupee,₹,"[""Hindi"",""English""]",+91,.in
+23,Indonesia,ID,IDN,Jakarta,Asia,South-Eastern Asia,277534122,1904569,IDR,Indonesian rupiah,Rp,"[""Indonesian""]",+62,.id
+24,Iran,IR,IRN,Tehran,Asia,Southern Asia,87923432,1648195,IRR,Iranian rial,﷼,"[""Persian""]",+98,.ir
+25,Iraq,IQ,IRQ,Baghdad,Asia,Western Asia,42164965,438317,IQD,Iraqi dinar,ع.د,"[""Arabic"",""Kurdish""]",+964,.iq
+26,Ireland,IE,IRL,Dublin,Europe,Northern Europe,5123536,70273,EUR,Euro,€,"[""English"",""Irish""]",+353,.ie
+27,Israel,IL,ISR,Jerusalem,Asia,Western Asia,9364000,20770,ILS,Israeli new shekel,₪,"[""Hebrew"",""Arabic""]",+972,.il
+28,Italy,IT,ITA,Rome,Europe,Southern Europe,59554023,301336,EUR,Euro,€,"[""Italian""]",+39,.it
+29,Japan,JP,JPN,Tokyo,Asia,Eastern Asia,123294513,377930,JPY,Japanese yen,¥,"[""Japanese""]",+81,.jp
+30,Kenya,KE,KEN,Nairobi,Africa,Eastern Africa,54985698,580367,KES,Kenyan shilling,KSh,"[""Swahili"",""English""]",+254,.ke
+31,Malaysia,MY,MYS,Kuala Lumpur,Asia,South-Eastern Asia,33573874,329847,MYR,Malaysian ringgit,RM,"[""Malay""]",+60,.my
+32,Mexico,MX,MEX,Mexico City,Americas,Central America,128455567,1964375,MXN,Mexican peso,$,"[""Spanish""]",+52,.mx
+33,Morocco,MA,MAR,Rabat,Africa,Northern Africa,37457971,446550,MAD,Moroccan dirham,د.م.,"[""Arabic"",""Tamazight"",""French""]",+212,.ma
+34,Netherlands,NL,NLD,Amsterdam,Europe,Western Europe,17890000,41543,EUR,Euro,€,"[""Dutch""]",+31,.nl
+35,New Zealand,NZ,NZL,Wellington,Oceania,Australia and New Zealand,5123600,270467,NZD,New Zealand dollar,$,"[""English"",""Māori""]",+64,.nz
+36,Nigeria,NG,NGA,Abuja,Africa,Western Africa,218541212,923768,NGN,Nigerian naira,₦,"[""English""]",+234,.ng
+37,Norway,NO,NOR,Oslo,Europe,Northern Europe,5474360,385207,NOK,Norwegian krone,kr,"[""Norwegian""]",+47,.no
+38,Pakistan,PK,PAK,Islamabad,Asia,Southern Asia,231402117,881913,PKR,Pakistani rupee,₨,"[""Urdu"",""English""]",+92,.pk
+39,Peru,PE,PER,Lima,Americas,South America,33359418,1285216,PEN,Peruvian sol,S/.,"[""Spanish""]",+51,.pe
+40,Philippines,PH,PHL,Manila,Asia,South-Eastern Asia,114163719,300000,PHP,Philippine peso,₱,"[""Filipino"",""English""]",+63,.ph
+41,Poland,PL,POL,Warsaw,Europe,Eastern Europe,37653500,312696,PLN,Polish złoty,zł,"[""Polish""]",+48,.pl
+42,Portugal,PT,PRT,Lisbon,Europe,Southern Europe,10247605,92212,EUR,Euro,€,"[""Portuguese""]",+351,.pt
+43,Russia,RU,RUS,Moscow,Europe,Eastern Europe,144444359,17098242,RUB,Russian ruble,₽,"[""Russian""]",+7,.ru
+44,Saudi Arabia,SA,SAU,Riyadh,Asia,Western Asia,36947025,2149690,SAR,Saudi riyal,﷼,"[""Arabic""]",+966,.sa
+45,South Africa,ZA,ZAF,Pretoria,Africa,Southern Africa,59893885,1221037,ZAR,South African rand,R,"[""Zulu"",""Xhosa"",""Afrikaans"",""English""]",+27,.za
+46,South Korea,KR,KOR,Seoul,Asia,Eastern Asia,51744876,100210,KRW,South Korean won,₩,"[""Korean""]",+82,.kr
+47,Spain,ES,ESP,Madrid,Europe,Southern Europe,47519628,505990,EUR,Euro,€,"[""Spanish""]",+34,.es
+48,Sweden,SE,SWE,Stockholm,Europe,Northern Europe,10521556,450295,SEK,Swedish krona,kr,"[""Swedish""]",+46,.se
+49,Switzerland,CH,CHE,Bern,Europe,Western Europe,8738791,41285,CHF,Swiss franc,Fr,"[""German"",""French"",""Italian"",""Romansh""]",+41,.ch
+50,Thailand,TH,THA,Bangkok,Asia,South-Eastern Asia,71601103,513120,THB,Thai baht,฿,"[""Thai""]",+66,.th
+51,Turkey,TR,TUR,Ankara,Asia,Western Asia,85341241,783562,TRY,Turkish lira,₺,"[""Turkish""]",+90,.tr
+52,Ukraine,UA,UKR,Kyiv,Europe,Eastern Europe,43531422,603550,UAH,Ukrainian hryvnia,₴,"[""Ukrainian""]",+380,.ua
+53,United Arab Emirates,AE,ARE,Abu Dhabi,Asia,Western Asia,9770529,83600,AED,UAE dirham,د.إ,"[""Arabic""]",+971,.ae
+54,United Kingdom,GB,GBR,London,Europe,Northern Europe,67736802,242495,GBP,Pound sterling,£,"[""English""]",+44,.uk
+55,United States,US,USA,"Washington, D.C.",Americas,Northern America,335893238,9833517,USD,United States dollar,$,"[""English""]",+1,.us
+56,Vietnam,VN,VNM,Hanoi,Asia,South-Eastern Asia,97338579,331212,VND,Vietnamese đồng,₫,"[""Vietnamese""]",+84,.vn
