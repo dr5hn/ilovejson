@@ -22,7 +22,7 @@ export const rateLimit = (options = {}) => {
   const windowMs = options.windowMs || 60000; // 1 minute
 
   return (req, res, next) => {
-    // Get client IP address
+    // Get client IP address (fallback when no keyFn provided)
     const forwarded = req.headers['x-forwarded-for'];
     const forwardedIp = Array.isArray(forwarded) ? forwarded[0] : forwarded;
     const rawIp = forwardedIp ||
@@ -35,7 +35,7 @@ export const rateLimit = (options = {}) => {
       ? rawIp.split(',')[0].trim()
       : rawIp.trim();
 
-    const key = `ratelimit:${ip}`;
+    const key = options.keyFn ? `ratelimit:${options.keyFn(req)}` : `ratelimit:${ip}`;
 
     const now = Date.now();
     const record = rateLimitStore.get(key) || {
@@ -51,10 +51,17 @@ export const rateLimit = (options = {}) => {
 
     // Check if limit exceeded
     if (record.count >= maxRequests) {
+      const retryAfter = Math.ceil((record.resetTime - now) / 1000);
       res.setHeader('X-RateLimit-Limit', maxRequests);
       res.setHeader('X-RateLimit-Remaining', 0);
       res.setHeader('X-RateLimit-Reset', new Date(record.resetTime).toISOString());
+      res.setHeader('Retry-After', retryAfter);
 
+      // v1 API routes get structured error; legacy routes get ReE format
+      if (options.v1) {
+        res.status(429).json({ error: 'rate_limit_exceeded' });
+        return;
+      }
       return ReE(res, 'Rate limit exceeded. Please try again later.', 429);
     }
 

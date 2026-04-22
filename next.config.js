@@ -8,4 +8,10 @@ module.exports = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-}
+  async rewrites() {
+    return [
+      // /api/docs → Swagger UI page
+      { source: '/api/docs', destination: '/api-docs' },
+    ];
+  },
+};

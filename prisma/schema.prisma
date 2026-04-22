@@ -20,6 +20,7 @@ model User {
   sessions      Session[]
   conversions   Conversion[]
   savedFiles    SavedFile[]
+  apiTokens     ApiToken[]
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 }
@@ -86,4 +87,36 @@ model SavedFile {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model ApiToken {
+  id          String     @id @default(cuid())
+  userId      String
+  name        String
+  tokenHash   String     @unique
+  tokenPrefix String
+  lastUsedAt  DateTime?
+  createdAt   DateTime   @default(now())
+  revokedAt   DateTime?
+  expiresAt   DateTime?
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usages      ApiUsage[]
+
+  @@index([userId])
+  @@index([tokenHash])
+}
+
+model ApiUsage {
+  id          String   @id @default(cuid())
+  tokenId     String
+  route       String
+  status      Int
+  inputBytes  Int      @default(0)
+  outputBytes Int      @default(0)
+  durationMs  Int      @default(0)
+  createdAt   DateTime @default(now())
+  token       ApiToken @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+
+  @@index([tokenId, createdAt])
+  @@index([createdAt])
 }
