@@ -7,6 +7,7 @@
   "dependencies": {
     "@microlink/react-json-view": "^1.23.0",
     "@prantlf/jsonlint": "^16.0.0",
+    "@sentry/nextjs": "8.55.1",
     "@tailwindcss/postcss": "4.1.16",
     "formidable": "^3.5.4",
     "generate-schema": "^2.6.0",

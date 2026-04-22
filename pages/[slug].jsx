@@ -6,6 +6,7 @@ import AlertError from '@components/error';
 import { tools } from '@constants/tools';
 import { postFile } from '@utils/requests';
 import { mimeTypes } from '@constants/mimetypes';
+import { trackToolUsed, trackConversionFailed, trackDownload, classifyError } from '@utils/analytics';
 
 // TODO: Convert it in to actual component
 const Slug = ({ slug }) => {
@@ -43,10 +44,11 @@ const Slug = ({ slug }) => {
       const file = acceptedFiles[0];
       const formData = new FormData();
       formData.append('fileInfo', file);
+      const startTime = Date.now();
 
       try {
         const response = await postFile(`api/${api}`, formData);
-        
+
         // Check if response indicates an error
         if (!response || response.success === false) {
           const errorMessage = response?.error || response?.message || 'Conversion failed';
@@ -56,27 +58,29 @@ const Slug = ({ slug }) => {
         // Handle different response structures
         // ReS returns { success: true, message: '...', data: '...' }
         const filePath = response?.data || '';
-        
+
         if (!filePath || typeof filePath !== 'string') {
           throw new Error('No file path returned from server');
         }
-        
+
         setDownloadLink(filePath);
-        
+
         // Generate filename from original filename with timestamp
         const originalName = file.name.split('.')[0];
         const timestamp = new Date().getTime();
         const fileExtension = fileType && fileType.length > 0 ? fileType[fileType.length - 1] : 'json';
         const filename = `${originalName}_${timestamp}.${fileExtension}`;
-        
+
         setDownloadFilename(filename);
         setConverted(true);
         setLoading(false);
         setShowError(false);
+
+        trackToolUsed(slug, file.size, Date.now() - startTime);
       } catch (err) {
         console.error('Conversion Error:', err);
         let errorMsg = err.message || 'Conversion failed. Please try again.';
-        
+
         // Format error messages based on conversion type
         const errorPrefixes = {
           'jsontocsv': 'JSON to CSV',
@@ -92,12 +96,13 @@ const Slug = ({ slug }) => {
           'jsontohtml': 'JSON to HTML',
           'htmltojson': 'HTML to JSON'
         };
-        
+
         const prefix = errorPrefixes[api] || 'Conversion';
         if (!errorMsg.includes(prefix.split(' ')[0])) {
           errorMsg = `${prefix} conversion failed: ${errorMsg}`;
         }
-        
+
+        trackConversionFailed(slug, classifyError(err.message));
         setErrorMessage(errorMsg);
         setShowError(true);
         setLoading(false);
@@ -171,7 +176,7 @@ const Slug = ({ slug }) => {
         {/* Convert Button - Show when file is selected and not converted yet */}
         {acceptedFiles.length > 0 && !loading && !converted && (
           <div className="row sm:flex mt-5">
-            <button 
+            <button
               className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg mx-auto transition-colors duration-200 inline-flex items-center"
               onClick={handleSubmit}
             >
@@ -196,12 +201,13 @@ const Slug = ({ slug }) => {
         {/* Download Button - Show only after successful conversion */}
         {converted && downloadLink && !loading && (
           <div className="row sm:flex mt-5">
-            <a 
-              href={downloadLink} 
+            <a
+              href={downloadLink}
               download={downloadFilename}
               className='mx-auto'
               style={{ textDecoration: 'none' }}
               onClick={() => {
+                trackDownload(slug);
                 setTimeout(() => {
                   URL.revokeObjectURL(downloadLink);
                 }, 100);

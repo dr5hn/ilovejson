@@ -1,9 +1,23 @@
 import '../styles/index.css';
+import '../sentry.client.config';
+import { useEffect } from 'react';
 import Head from 'next/head';
+import * as Sentry from '@sentry/nextjs';
+import ErrorBoundary from '@components/ErrorBoundary';
 
 function MyApp({ Component, pageProps }) {
   const og = pageProps.data?.og
   const title = pageProps.data?.title
+
+  useEffect(() => {
+    const handleUnhandledRejection = (event) => {
+      if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+        Sentry.captureException(event.reason);
+      }
+    };
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    return () => window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+  }, []);
 
   return (
     <>
@@ -37,7 +51,9 @@ function MyApp({ Component, pageProps }) {
         <meta name='theme-color' content='#FFFFFF' />
       </Head>
 
-      <Component {...pageProps} />
+      <ErrorBoundary>
+        <Component {...pageProps} />
+      </ErrorBoundary>
     </>
   )
 }

@@ -3,6 +3,7 @@ import { initDirs } from '@utils/initdir';
 import { globals } from '@constants/globals';
 import YAML from 'yaml';
 import { ReE, ReS } from '@utils/reusables';
+import { withErrorTracking } from '@middleware/errorHandler';
 
 const fs = require('fs');
 initDirs();
@@ -22,7 +23,7 @@ const yamlOptions = {
 };
 
 // Process a POST request
-export default async (req, res) => {
+const handler = async (req, res) => {
   // TODO: This should be in middleware.
   if (req.method !== 'POST') {
     return ReE(res, 'I ❤️ JSON. But you shouldn\'t be here.');
@@ -75,3 +76,5 @@ export default async (req, res) => {
   }
 
 }
+
+export default withErrorTracking(handler, { tool: 'json-to-yaml' });

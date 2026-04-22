@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import Layout from '@components/layout';
 import AlertError from '@components/error';
 import SourceEditor from '@components/source';
+import { trackToolUsed, trackConversionFailed } from '@utils/analytics';
 
 const Beautify = () => {
   const [sourceJSON, setSourceJSON] = useState('');
@@ -21,8 +22,10 @@ const Beautify = () => {
       if (JSON.parse(str) && !!str) {
         setOutputJSON(JSON.stringify(JSON.parse(str), undefined, 4));
         setShowError(false);
+        trackToolUsed('beautify', str.length, 0);
       }
     } catch (e) {
+      trackConversionFailed('beautify', 'invalid_format');
       setShowError(true);
       setTimeout(() => {
         setShowError(false);

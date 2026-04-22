@@ -2,6 +2,7 @@ import { IncomingForm } from 'formidable';
 import { initDirs } from '@utils/initdir';
 import { globals } from '@constants/globals';
 import { ReE, ReS } from '@utils/reusables';
+import { withErrorTracking } from '@middleware/errorHandler';
 
 const fs = require('fs');
 initDirs();
@@ -262,7 +263,7 @@ function markdownToJson(markdown) {
 }
 
 // Process a POST request
-export default async (req, res) => {
+const handler = async (req, res) => {
   // TODO: This should be in middleware.
   if (req.method !== 'POST') {
     return ReE(res, 'I ❤️ JSON. But you shouldn\'t be here.');
@@ -315,4 +316,6 @@ export default async (req, res) => {
     return ReE(res, 'I ❤️ JSON. But you have entered invalid Markdown.');
   }
 }
+
+export default withErrorTracking(handler, { tool: 'markdown-to-json' });
 
