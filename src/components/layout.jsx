@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { utils } from '@constants/utils';
 
 const Layout = ({
@@ -10,7 +11,7 @@ const Layout = ({
     <header className="lg:px-16 px-6 bg-white flex flex-wrap items-center lg:py-0 py-2">
       <div className="flex-1 flex justify-between items-center">
         <Link href="/">
-          <img src="/images/logo.png" alt="ilovejson" width="64" />
+          <Image src="/images/logo.png" alt="ilovejson" width={64} height={64} />
         </Link>
       </div>
 
@@ -35,7 +36,7 @@ const Layout = ({
           </ul>
         </nav>
         <Link href="https://github.com/ilovejson/ilovejson" className="lg:ml-4 flex items-center justify-start lg:mb-0 mb-4 pointer-cursor">
-          <img className="rounded-full w-10 h-10 border-2 border-transparent hover:border-red-400" src="/images/github.png" alt="ilovejson" />
+          <Image className="rounded-full w-10 h-10 border-2 border-transparent hover:border-red-400" src="/images/github.png" alt="ilovejson" width={40} height={40} />
         </Link>
       </div>
     </header>

@@ -35,8 +35,8 @@
     "build": "next build",
     "start": "next start -p 3000",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "next lint",
-    "lint:fix": "eslint --fix --ext .js,.jsx --ignore-path .eslintignore ."
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix ."
   },
   "repository": {
     "type": "git",
