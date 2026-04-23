@@ -61,7 +61,9 @@ export function createV1Handler(fn, methods = ['POST']) {
     } catch (err) {
       console.error('[v1]', err.message);
       if (!res.headersSent) {
-        res.status(500).json({ error: 'internal_server_error' });
+        const status = err.statusCode === 400 ? 400 : 500;
+        const error  = status === 400 ? err.message : 'internal_server_error';
+        res.status(status).json({ error });
       }
     }
   };

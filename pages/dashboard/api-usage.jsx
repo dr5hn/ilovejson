@@ -133,14 +133,14 @@ export async function getServerSideProps(context) {
       by: ['route'],
       where: { tokenId: { in: tokenIds }, createdAt: { gte: since } },
       _count: { _all: true },
-      orderBy: { _count: { _all: 'desc' } },
+      orderBy: { _count: { id: 'desc' } },
       take: 10,
     }),
     prisma.apiUsage.groupBy({
       by: ['tokenId'],
       where: { tokenId: { in: tokenIds }, createdAt: { gte: since } },
       _count: { _all: true },
-      orderBy: { _count: { _all: 'desc' } },
+      orderBy: { _count: { id: 'desc' } },
       take: 5,
     }),
   ]);

@@ -10,18 +10,52 @@ import toJsonSchema from 'to-json-schema';
 
 // ─── CSV ────────────────────────────────────────────────────────────────────
 
+function flattenObj(obj, prefix = '') {
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    const key = prefix ? `${prefix}.${k}` : k;
+    if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
+      Object.assign(out, flattenObj(v, key));
+    } else {
+      out[key] = v;
+    }
+  }
+  return out;
+}
+
+function unwindRow(item, prefix = '') {
+  const flat = flattenObj(item, prefix);
+  // Find the first key whose value is an array of objects
+  const arrayKey = Object.keys(flat).find(k => {
+    const v = flat[k];
+    return Array.isArray(v) && v.length > 0 && typeof v[0] === 'object' && v[0] !== null;
+  });
+  if (!arrayKey) return [flat];
+  const children = flat[arrayKey];
+  const rest = Object.fromEntries(Object.entries(flat).filter(([k]) => k !== arrayKey));
+  return children.flatMap(child => {
+    const childFlat = flattenObj(child, arrayKey);
+    return unwindRow({ ...rest, ...childFlat });
+  });
+}
+
 export async function csvToJson(input) {
-  return csv2json(input, { excelBOM: true, trimHeaderFields: true, trimFieldValues: true });
+  return csv2json(input, { excelBOM: false, trimHeaderFields: true, trimFieldValues: true });
 }
 
 export async function jsonToCsv(input) {
   const data = Array.isArray(input) ? input : [input];
-  return json2csv(data, {
-    excelBOM: true,
+  const rows = data.flatMap(item => unwindRow(item));
+  const csv = await json2csv(rows, {
+    excelBOM: false,
     expandArrayObjects: false,
     trimHeaderFields: true,
     trimFieldValues: true,
   });
+  // json-2-csv escapes dots in keys — unescape the header line only
+  const lines = csv.split('\n');
+  lines[0] = lines[0].replace(/\\./g, '.');
+  return lines.join('\n');
 }
 
 // ─── YAML ───────────────────────────────────────────────────────────────────
@@ -57,12 +91,33 @@ export function xmlToJson(input) {
   return parsed;
 }
 
+function escapeXmlValue(str) {
+  return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
+function buildXmlNode(tag, value, indent) {
+  const pad = '  '.repeat(indent);
+  if (value === null || value === undefined) return `${pad}<${tag}/>`;
+  if (Array.isArray(value)) {
+    return value.map(item => buildXmlNode(tag, item, indent)).join('\n');
+  }
+  if (typeof value === 'object') {
+    const children = Object.entries(value)
+      .map(([k, v]) => buildXmlNode(k, v, indent + 1))
+      .join('\n');
+    return `${pad}<${tag}>\n${children}\n${pad}</${tag}>`;
+  }
+  return `${pad}<${tag}>${escapeXmlValue(value)}</${tag}>`;
+}
+
 export function jsonToXml(input) {
   if (typeof input !== 'object' || input === null) {
     throw new Error('JSON must be an object or array.');
   }
-  const wrapped = Array.isArray(input) ? { root: { item: input } } : { root: input };
-  return '<?xml version="1.0" encoding="UTF-8"?>\n' + xmlBuilder.build(wrapped);
+  const body = Array.isArray(input)
+    ? input.map(item => buildXmlNode('item', item, 1)).join('\n')
+    : Object.entries(input).map(([k, v]) => buildXmlNode(k, v, 1)).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<root>\n${body}\n</root>\n`;
 }
 
 // ─── PHP ────────────────────────────────────────────────────────────────────
@@ -160,20 +215,19 @@ function parsePhpArray(str, pos, closeChar) {
 }
 
 export function phpToJson(input) {
-  // Remove comments
-  const cleaned = input.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-  let match = cleaned.match(/\$[a-zA-Z_]\w*\s*=\s*/);
-  if (!match) throw new Error('No PHP variable assignment found.');
-  const startPos = match.index + match[0].length;
+  const cleaned = input.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '').trim();
+  // Accept input with or without a leading `$var =` assignment
+  const assignMatch = cleaned.match(/\$[a-zA-Z_]\w*\s*=\s*/);
+  const startPos = assignMatch ? assignMatch.index + assignMatch[0].length : 0;
   const ch = cleaned[startPos];
   let result;
   if (ch === '[') {
     ({ value: result } = parsePhpArray(cleaned, startPos + 1, ']'));
-  } else if (cleaned.slice(startPos, startPos + 5).match(/^array\s*\(/i)) {
+  } else if (cleaned.slice(startPos).match(/^array\s*\(/i)) {
     const m = cleaned.slice(startPos).match(/^array\s*\(/i);
     ({ value: result } = parsePhpArray(cleaned, startPos + m[0].length, ')'));
   } else {
-    throw new Error('No PHP array found.');
+    throw new Error('Input must be a PHP array literal (array(...) or [...]) or a variable assignment.');
   }
   return result;
 }
@@ -235,6 +289,12 @@ export function markdownToJson(markdown) {
   let currentObject = {};
   let lastHeading = null;
 
+  const isSepLine = (line) => {
+    const t = line.trim();
+    if (!t.startsWith('|') || !t.endsWith('|')) return false;
+    return t.split('|').map(c => c.trim()).filter(c => c).every(c => /^[-:\s]+$/.test(c));
+  };
+
   const parseCell = (v) => {
     if (v === 'true') return true;
     if (v === 'false') return false;
@@ -247,14 +307,14 @@ export function markdownToJson(markdown) {
     const trimmed = line.trim();
     if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
       const cells = trimmed.split('|').map(c => c.trim()).filter(c => c);
-      if (index + 1 < lines.length && lines[index + 1].trim().match(/^\|[\s\-:]+\|$/)) {
+      if (index + 1 < lines.length && isSepLine(lines[index + 1])) {
         headers = cells; inTable = true; currentTable = []; return;
       }
-      if (inTable && trimmed.match(/^\|[\s\-:]+\|$/)) return;
+      if (inTable && isSepLine(trimmed)) return;
       if (inTable && headers.length > 0 && cells.length === headers.length) {
         const row = {};
         headers.forEach((h, i) => { row[h] = parseCell(cells[i] || ''); });
-        const isSep = Object.values(row).every(v => v === '---' || String(v).trim() === '---');
+        const isSep = Object.values(row).every(v => /^[-:\s]+$/.test(String(v).trim()));
         if (!isSep) currentTable.push(row);
       }
     } else {
@@ -306,6 +366,9 @@ function escapeHtml(text) {
 function formatValue(value) {
   if (value === null) return 'null';
   if (value === undefined) return 'undefined';
+  if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object' && value[0] !== null) {
+    return jsonToHtml(value);
+  }
   if (typeof value === 'object') return '<pre>' + escapeHtml(JSON.stringify(value, null, 2)) + '</pre>';
   return escapeHtml(String(value));
 }
@@ -371,6 +434,26 @@ function extractTables(html) {
   return tables;
 }
 
+// Replace nested <table>...</table> blocks with placeholders so row regexes work correctly
+function hoistNestedTables(html) {
+  const nested = [];
+  let out = '';
+  let i = 0;
+  const low = html.toLowerCase();
+  while (i < html.length) {
+    if (low.startsWith('<table', i) && /[\s>]/.test(html[i + 6] || '')) {
+      let depth = 0, j = i;
+      while (j < html.length) {
+        if (low.startsWith('<table', j) && /[\s>]/.test(html[j + 6] || '')) { depth++; j += 6; }
+        else if (low.startsWith('</table>', j)) { depth--; if (depth === 0) { nested.push(html.slice(i, j + 8)); out += `\x00NESTED${nested.length - 1}\x00`; i = j + 8; break; } else j += 8; }
+        else j++;
+      }
+      if (depth !== 0) break;
+    } else { out += html[i++]; }
+  }
+  return { out, nested };
+}
+
 export function htmlToJson(htmlContent) {
   if (!htmlContent?.trim()) throw new Error('Empty HTML input.');
   const rawTables = extractTables(htmlContent);
@@ -378,7 +461,10 @@ export function htmlToJson(htmlContent) {
   const result = [];
 
   rawTables.forEach(tableHtml => {
-    const inner = tableHtml.match(/<table[^>]*>([\s\S]*)<\/table>/i)?.[1] || '';
+    const fullInner = tableHtml.match(/<table[^>]*>([\s\S]*)<\/table>/i)?.[1] || '';
+    // Hoist nested tables so row/cell regexes only see the outer table structure
+    const { out: inner, nested } = hoistNestedTables(fullInner);
+
     let headerCells = [];
     const theadMatch = inner.match(/<thead[^>]*>([\s\S]*?)<\/thead>/i);
     if (theadMatch) {
@@ -399,10 +485,17 @@ export function htmlToJson(htmlContent) {
       const cells = extractCells(row);
       if (cells.length !== headerCells.length) return;
       const rowObj = {};
-      headerCells.forEach((h, i) => {
-        const pre = cells[i].raw.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+      headerCells.forEach((h, idx) => {
+        const raw = cells[idx].raw;
+        // Nested table placeholder
+        const nestedMatch = raw.match(/\x00NESTED(\d+)\x00/);
+        if (nestedMatch) {
+          rowObj[h] = htmlToJson(nested[parseInt(nestedMatch[1])]);
+          return;
+        }
+        const pre = raw.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
         if (pre) { try { rowObj[h] = JSON.parse(pre[1]); } catch { rowObj[h] = extractText(pre[1]); } }
-        else rowObj[h] = parseHtmlValue(cells[i].text);
+        else rowObj[h] = parseHtmlValue(cells[idx].text);
       });
       result.push(rowObj);
     });
@@ -502,7 +595,11 @@ export function sqlToJson(input) {
     extractSqlTuples(m[3]).forEach(tuple => {
       const vals = parseSqlRowValues(tuple);
       const obj = {};
-      cols.forEach((c, i) => { obj[c] = vals[i] !== undefined ? vals[i] : null; });
+      cols.forEach((c, i) => {
+        let v = vals[i] !== undefined ? vals[i] : null;
+        if (typeof v === 'string') { try { v = JSON.parse(v); } catch { } }
+        obj[c] = v;
+      });
       results[table].push(obj);
     });
   }
@@ -565,13 +662,24 @@ export async function jsonToExcel(input, sheetName = 'Sheet1') {
   const headers = Object.keys(flat[0] || {});
   ws.columns = headers.map(k => ({ header: k, key: k }));
   flat.forEach(row => ws.addRow(row));
-  return workbook.xlsx.writeBuffer();
+  const raw = await workbook.xlsx.writeBuffer();
+  return Buffer.isBuffer(raw) ? raw : Buffer.from(raw);
 }
 
 export async function excelToJson(base64Input, sheetName) {
-  const buffer = Buffer.from(base64Input, 'base64');
+  if (!base64Input || typeof base64Input !== 'string' || base64Input.length < 8) {
+    throw Object.assign(new Error('Input must be a non-empty base64-encoded .xlsx file.'), { statusCode: 400 });
+  }
+  const buffer = Buffer.from(base64Input.replace(/\s+/g, ''), 'base64');
+  if (buffer.length < 4) {
+    throw Object.assign(new Error('Input is not a valid Excel file.'), { statusCode: 400 });
+  }
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(buffer);
+  try {
+    await workbook.xlsx.load(buffer);
+  } catch {
+    throw Object.assign(new Error('Could not parse Excel file. Ensure input is a valid base64-encoded .xlsx file.'), { statusCode: 400 });
+  }
   const ws = sheetName ? workbook.getWorksheet(sheetName) : workbook.worksheets[0];
   if (!ws) throw new Error(`Sheet "${sheetName}" not found.`);
   const rows = [];
@@ -580,7 +688,11 @@ export async function excelToJson(base64Input, sheetName) {
     const values = row.values;
     if (rowNumber === 1) { headers = values.slice(1).map(v => (v != null ? String(v) : '')); return; }
     const obj = {};
-    headers.forEach((h, i) => { obj[h] = values[i + 1] !== undefined ? values[i + 1] : null; });
+    headers.forEach((h, i) => {
+      let v = values[i + 1] !== undefined ? values[i + 1] : null;
+      if (typeof v === 'string') { try { v = JSON.parse(v); } catch { } }
+      obj[h] = v;
+    });
     rows.push(obj);
   });
   if (rows.length === 0) throw new Error('No data found in Excel sheet.');
