@@ -25,6 +25,7 @@ export default function ApiTokensPage({ initialTokens }) {
   const [error, setError] = useState('');
   const [renamingId, setRenamingId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
+  const [actionError, setActionError] = useState('');
 
   async function createToken() {
     if (!name.trim()) { setError('Token name is required.'); return; }
@@ -39,20 +40,21 @@ export default function ApiTokensPage({ initialTokens }) {
   }
 
   async function revokeToken(id) {
-    if (!confirm('Revoke this token? It will stop working immediately.')) return;
+    setActionError('');
     const r = await fetch(`/api/v1/tokens/${id}`, { method: 'DELETE' });
     if (r.ok) setTokens(prev => prev.filter(t => t.id !== id));
-    else alert('Failed to revoke token.');
+    else setActionError('Failed to revoke token. Please try again.');
   }
 
   async function renameToken(id) {
     if (!renameValue.trim()) return;
+    setActionError('');
     const r = await fetch(`/api/v1/tokens/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: renameValue }) });
     const data = await r.json();
     if (r.ok) {
       setTokens(prev => prev.map(t => t.id === id ? { ...t, name: data.token.name } : t));
       setRenamingId(null); setRenameValue('');
-    } else alert('Failed to rename token.');
+    } else setActionError(data.error || 'Failed to rename token. Please try again.');
   }
 
   return (
@@ -105,6 +107,7 @@ export default function ApiTokensPage({ initialTokens }) {
         {/* Token list */}
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <h2 className="text-lg font-semibold text-foreground px-6 py-4 border-b border-border">Your tokens ({tokens.length})</h2>
+          {actionError && <p className="px-6 py-3 text-sm text-red-500 border-b border-border">{actionError}</p>}
           {tokens.length === 0 ? (
             <p className="px-6 py-8 text-muted-foreground text-sm text-center">No tokens yet. Create one above to get started.</p>
           ) : (

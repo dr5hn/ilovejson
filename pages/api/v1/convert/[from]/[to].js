@@ -3,6 +3,7 @@ import * as conv from '@lib/converters';
 
 const OUTPUT_LIMIT = 50 * 1024 * 1024; // 50 MB
 
+
 export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
 
 const SUPPORTED = {
@@ -14,7 +15,7 @@ const SUPPORTED = {
   'xml/json':        (input, opts) => ({ output: conv.xmlToJson(input), format: 'json' }),
   'json/php':        (input, opts) => ({ output: conv.jsonToPhp(input), format: 'php' }),
   'php/json':        (input, opts) => ({ output: conv.phpToJson(input), format: 'json' }),
-  'json/markdown':   (input, opts) => ({ output: conv.jsonToMarkdown(input), format: 'markdown' }),
+  'json/markdown':   (input, opts) => ({ output: conv.jsonToMarkdown(input), format: 'md' }),
   'markdown/json':   (input, opts) => ({ output: conv.markdownToJson(input), format: 'json' }),
   'json/html':       (input, opts) => ({ output: conv.jsonToHtml(input), format: 'html' }),
   'html/json':       (input, opts) => ({ output: conv.htmlToJson(input), format: 'json' }),
@@ -22,7 +23,7 @@ const SUPPORTED = {
   'toml/json':       (input, opts) => ({ output: conv.tomlToJson(input), format: 'json' }),
   'json/sql':        (input, opts) => ({ output: conv.jsonToSql(input, opts?.tableName), format: 'sql' }),
   'sql/json':        (input, opts) => ({ output: conv.sqlToJson(input), format: 'json' }),
-  'json/typescript': (input, opts) => ({ output: conv.jsonToTypescript(input, opts?.rootName), format: 'typescript' }),
+  'json/typescript': (input, opts) => ({ output: conv.jsonToTypescript(input, opts?.rootName), format: 'ts' }),
   'typescript/json': (input, opts) => ({ output: conv.typescriptToJson(input), format: 'json' }),
   'json/excel': async (input, opts) => {
     const buf = await conv.jsonToExcel(input, opts?.sheetName);

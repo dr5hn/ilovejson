@@ -5,8 +5,8 @@ module.exports = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
+  turbopack: {
+    root: __dirname,
   },
   async rewrites() {
     return [

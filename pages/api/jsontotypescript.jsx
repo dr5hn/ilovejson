@@ -1,6 +1,6 @@
 import { initDirs } from '@utils/initdir';
 import { globals } from '@constants/globals';
-import JsonToTS from 'json-to-ts';
+import { jsonToTypescript } from '@lib/converters';
 import { ReS, ReE } from '@utils/reusables';
 import { runMiddleware } from '@middleware/apiMiddleware';
 import { validateMethod } from '@middleware/methodValidation';
@@ -44,8 +44,7 @@ async function handler(req, res) {
   // Read rootName from formidable-parsed fields (req.body is undefined when bodyParser: false)
   const rootField = req.uploadedFile?.fields?.rootName;
   const rootName = (Array.isArray(rootField) ? rootField[0] : rootField) || 'RootObject';
-  const tsInterfaces = JsonToTS(jsonData, { rootName });
-  const tsOutput = tsInterfaces.join('\n\n');
+  const tsOutput = jsonToTypescript(jsonData, rootName);
 
   const modifiedDate = new Date().getTime();
   const outputFilePath = `${downloadDir}/${modifiedDate}.ts`;

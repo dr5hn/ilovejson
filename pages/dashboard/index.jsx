@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@lib/auth';
 import DashboardLayout from '@components/dashboard/DashboardLayout';
@@ -17,18 +18,18 @@ const Dashboard = ({ stats, recentConversions }) => {
           <div className="box border rounded shadow bg-white dark:bg-dark-surface dark:border-dark-border p-6">
             <h3 className="font-medium text-gray-900 dark:text-dark-text mb-4">Quick Actions</h3>
             <div className="grid grid-cols-2 gap-3">
-              <a href="/json-to-csv" className="flex items-center gap-2 p-3 rounded-lg border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-border/30 transition-colors">
+              <Link href="/json-to-csv" className="flex items-center gap-2 p-3 rounded-lg border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-border/30 transition-colors">
                 <span className="text-sm text-gray-700 dark:text-dark-text">JSON → CSV</span>
-              </a>
-              <a href="/json-to-yaml" className="flex items-center gap-2 p-3 rounded-lg border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-border/30 transition-colors">
+              </Link>
+              <Link href="/json-to-yaml" className="flex items-center gap-2 p-3 rounded-lg border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-border/30 transition-colors">
                 <span className="text-sm text-gray-700 dark:text-dark-text">JSON → YAML</span>
-              </a>
-              <a href="/diff" className="flex items-center gap-2 p-3 rounded-lg border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-border/30 transition-colors">
+              </Link>
+              <Link href="/diff" className="flex items-center gap-2 p-3 rounded-lg border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-border/30 transition-colors">
                 <span className="text-sm text-gray-700 dark:text-dark-text">JSON Diff</span>
-              </a>
-              <a href="/merge" className="flex items-center gap-2 p-3 rounded-lg border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-border/30 transition-colors">
+              </Link>
+              <Link href="/merge" className="flex items-center gap-2 p-3 rounded-lg border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-border/30 transition-colors">
                 <span className="text-sm text-gray-700 dark:text-dark-text">JSON Merge</span>
-              </a>
+              </Link>
             </div>
           </div>
         </div>

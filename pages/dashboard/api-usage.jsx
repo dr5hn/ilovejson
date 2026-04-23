@@ -3,9 +3,17 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@lib/auth';
 import DashboardLayout from '@components/dashboard/DashboardLayout';
 import prisma from '@lib/prisma';
+import { getEntitlements } from '@lib/entitlements';
 
 function formatDate(d) {
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function hoursUntilMidnight() {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setUTCHours(24, 0, 0, 0);
+  return Math.ceil((midnight - now) / 3600000);
 }
 
 function BarChart({ data }) {
@@ -33,7 +41,7 @@ function BarChart({ data }) {
         options: {
           responsive: true,
           plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
         },
       });
     });
@@ -44,14 +52,41 @@ function BarChart({ data }) {
   return <canvas ref={canvasRef} height={140} />;
 }
 
-export default function ApiUsagePage({ dailyUsage, routeBreakdown, topTokens, totals }) {
+export default function ApiUsagePage({ dailyUsage, routeBreakdown, topTokens, totals, dailyLimit }) {
+  const usedToday = totals.today;
+  const remaining = dailyLimit === null ? null : Math.max(0, dailyLimit - usedToday);
+  const pct = dailyLimit ? Math.min(100, Math.round((usedToday / dailyLimit) * 100)) : 0;
+
   return (
     <DashboardLayout title="API Usage" description="Monitor your API consumption">
       <div className="space-y-6">
+
+        {/* Daily limit meter */}
+        {dailyLimit !== null && (
+          <div className="bg-card border border-border rounded-xl p-6">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-semibold text-foreground">Daily requests</p>
+              <p className="text-sm text-muted-foreground">
+                <span className="font-bold text-foreground">{usedToday.toLocaleString()}</span>
+                {' / '}{dailyLimit.toLocaleString()}
+              </p>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2.5 mb-2">
+              <div
+                className={`h-2.5 rounded-full transition-all ${pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {remaining.toLocaleString()} requests remaining today · resets in {hoursUntilMidnight()} h
+            </p>
+          </div>
+        )}
+
         {/* Totals */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: 'Total requests', value: totals.requests },
+            { label: 'Total requests (30d)', value: totals.requests },
             { label: 'Success (2xx)', value: totals.success },
             { label: 'Errors (4xx/5xx)', value: totals.errors },
             { label: 'Avg duration', value: `${totals.avgDuration}ms` },
@@ -117,31 +152,39 @@ export async function getServerSideProps(context) {
     return { redirect: { destination: '/auth/signin', permanent: false } };
   }
 
-  const since = new Date(Date.now() - 30 * 86400000);
+  const since30d = new Date(Date.now() - 30 * 86400000);
+  const since24h = new Date(Date.now() - 86400000);
+
+  const entitlements = await getEntitlements(session.user.id);
+  const dailyLimit = entitlements.apiEnabled ? entitlements.apiRateLimit.perDay : null;
+
   const tokenIds = (await prisma.apiToken.findMany({
     where: { userId: session.user.id },
     select: { id: true },
   })).map(t => t.id);
 
-  const [allUsage, routeBreakdown, topTokens] = await Promise.all([
+  const [allUsage, routeBreakdown, topTokens, todayCount] = await Promise.all([
     prisma.apiUsage.findMany({
-      where: { tokenId: { in: tokenIds }, createdAt: { gte: since } },
+      where: { tokenId: { in: tokenIds }, createdAt: { gte: since30d } },
       select: { createdAt: true, status: true, durationMs: true },
       orderBy: { createdAt: 'asc' },
     }),
     prisma.apiUsage.groupBy({
       by: ['route'],
-      where: { tokenId: { in: tokenIds }, createdAt: { gte: since } },
+      where: { tokenId: { in: tokenIds }, createdAt: { gte: since30d } },
       _count: { _all: true },
       orderBy: { _count: { id: 'desc' } },
       take: 10,
     }),
     prisma.apiUsage.groupBy({
       by: ['tokenId'],
-      where: { tokenId: { in: tokenIds }, createdAt: { gte: since } },
+      where: { tokenId: { in: tokenIds }, createdAt: { gte: since30d } },
       _count: { _all: true },
       orderBy: { _count: { id: 'desc' } },
       take: 5,
+    }),
+    prisma.apiUsage.count({
+      where: { tokenId: { in: tokenIds }, createdAt: { gte: since24h } },
     }),
   ]);
 
@@ -162,7 +205,7 @@ export async function getServerSideProps(context) {
   // Route error counts
   const errorCounts = await prisma.apiUsage.groupBy({
     by: ['route'],
-    where: { tokenId: { in: tokenIds }, createdAt: { gte: since }, status: { gte: 400 } },
+    where: { tokenId: { in: tokenIds }, createdAt: { gte: since30d }, status: { gte: 400 } },
     _count: { _all: true },
   });
   const errorMap = Object.fromEntries(errorCounts.map(e => [e.route, e._count._all]));
@@ -173,6 +216,7 @@ export async function getServerSideProps(context) {
     success: allUsage.filter(u => u.status >= 200 && u.status < 300).length,
     errors: allUsage.filter(u => u.status >= 400).length,
     avgDuration: allUsage.length ? Math.round(allUsage.reduce((s, u) => s + u.durationMs, 0) / allUsage.length) : 0,
+    today: todayCount,
   };
 
   return {
@@ -181,6 +225,7 @@ export async function getServerSideProps(context) {
       routeBreakdown: JSON.parse(JSON.stringify(routeBreakdownEnriched)),
       topTokens: JSON.parse(JSON.stringify(topTokensEnriched)),
       totals,
+      dailyLimit,
     },
   };
 }

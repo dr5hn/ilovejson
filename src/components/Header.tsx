@@ -194,10 +194,16 @@ export function Header() {
             Pricing
           </Link>
           <Link
-            href="/api-docs"
+            href="/api"
             className="px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary rounded-full transition-all duration-200"
           >
             API
+          </Link>
+          <Link
+            href="/api-docs"
+            className="px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary rounded-full transition-all duration-200"
+          >
+            API Docs
           </Link>
           <Link
             href="/cli"
@@ -209,6 +215,12 @@ export function Header() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard"
+            className="hidden md:flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary rounded-full transition-all duration-200"
+          >
+            Dashboard
+          </Link>
           <Link
             href="/#tools"
             className="hidden md:flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground bg-secondary/80 hover:bg-secondary rounded-full transition-all duration-200 group"
@@ -304,9 +316,11 @@ export function Header() {
                 </div>
               ))}
               <div className="border-t border-border mt-2 pt-4 flex flex-col gap-2">
-                <Link href="/cli" className="block w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl text-center transition-colors" onClick={() => setMobileMenuOpen(false)}>CLI</Link>
+                <Link href="/dashboard" className="block w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl text-center transition-colors" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
                 <Link href="/pricing" className="block w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl text-center transition-colors" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
-                <Link href="/api-docs" className="block w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl text-center transition-colors" onClick={() => setMobileMenuOpen(false)}>API</Link>
+                <Link href="/api" className="block w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl text-center transition-colors" onClick={() => setMobileMenuOpen(false)}>API</Link>
+                <Link href="/api-docs" className="block w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl text-center transition-colors" onClick={() => setMobileMenuOpen(false)}>API Docs</Link>
+                <Link href="/cli" className="block w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-xl text-center transition-colors" onClick={() => setMobileMenuOpen(false)}>CLI</Link>
               </div>
             </>
           )}

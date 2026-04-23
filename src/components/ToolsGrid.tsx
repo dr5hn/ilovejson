@@ -56,7 +56,7 @@ export function ToolsGrid() {
   const filteredTools = activeCategory === "all" ? tools : tools.filter((tool) => tool.category === activeCategory)
 
   return (
-    <section className="w-full py-20 bg-gradient-to-b from-background via-muted/30 to-background">
+    <section id="tools" className="w-full py-20 bg-gradient-to-b from-background via-muted/30 to-background">
       <div className="max-w-[90rem] mx-auto px-4">
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary rounded-full text-xs font-semibold text-muted-foreground mb-4">

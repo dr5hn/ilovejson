@@ -215,7 +215,15 @@ function parsePhpArray(str, pos, closeChar) {
 }
 
 export function phpToJson(input) {
-  const cleaned = input.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '').trim();
+  const cleaned = input
+    .replace(/<\?php/gi, '')           // strip opening PHP tag
+    .replace(/\?>/g, '')               // strip closing PHP tag
+    .replace(/^\s*return\s+/m, '')     // strip bare `return`
+    .replace(/\/\*[\s\S]*?\*\//g, '')  // strip block comments
+    .replace(/\/\/.*$/gm, '')          // strip line comments
+    .trim()
+    .replace(/;$/, '')                 // strip trailing semicolon
+    .trim();
   // Accept input with or without a leading `$var =` assignment
   const assignMatch = cleaned.match(/\$[a-zA-Z_]\w*\s*=\s*/);
   const startPos = assignMatch ? assignMatch.index + assignMatch[0].length : 0;
@@ -608,9 +616,25 @@ export function sqlToJson(input) {
 
 // ─── TypeScript ──────────────────────────────────────────────────────────────
 
+const TS_RESERVED = new Set([
+  'break','case','catch','class','const','continue','debugger','default',
+  'delete','do','else','enum','export','extends','false','finally','for',
+  'function','if','import','in','instanceof','new','null','return','super',
+  'switch','this','throw','true','try','typeof','var','void','while','with',
+  'yield','let','static','implements','interface','package','private',
+  'protected','public','abstract','as','async','await','declare','from',
+  'module','namespace','of','readonly','require','type','undefined',
+]);
+
+function quoteReservedProps(ts) {
+  return ts.replace(/^(\s+)(\w+)(\??:)/gm, (_, indent, name, rest) =>
+    TS_RESERVED.has(name) ? `${indent}'${name}'${rest}` : `${indent}${name}${rest}`
+  );
+}
+
 export function jsonToTypescript(input, rootName = 'RootObject') {
   if (typeof input !== 'object' || input === null) throw new Error('JSON must be an object or array.');
-  return JsonToTS(input, { rootName }).join('\n\n');
+  return quoteReservedProps(JsonToTS(input, { rootName }).join('\n\n'));
 }
 
 function mapTsType(t) {

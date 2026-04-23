@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@lib/auth';
 import prisma from '@lib/prisma';
 import { setCorsHeaders } from '@middleware/apiTokenAuth';
+import { getEntitlements } from '@lib/entitlements';
 
 export const config = { api: { bodyParser: true } };
 
@@ -42,6 +43,17 @@ export default async function handler(req, res) {
 
   // POST /api/v1/tokens — create token
   if (req.method === 'POST') {
+    const entitlements = await getEntitlements(session.user.id);
+
+    if (!entitlements.apiEnabled) {
+      const appUrl = process.env.NEXTAUTH_URL || 'https://www.ilovejson.com';
+      return res.status(403).json({
+        error: 'api_not_available',
+        message: 'API access requires a Pro or Business subscription.',
+        upgrade_url: `${appUrl}/pricing`,
+      });
+    }
+
     const { name, expiresIn = 'never' } = req.body || {};
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ error: 'missing_field', field: 'name' });
@@ -50,12 +62,17 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'invalid_expiry', valid: Object.keys(EXPIRY_OPTIONS) });
     }
 
-    // Count existing tokens
+    // Enforce tier token limit
+    const tokenLimit = entitlements.apiTokenLimit;
     const count = await prisma.apiToken.count({
       where: { userId: session.user.id, revokedAt: null },
     });
-    if (count >= 10) {
-      return res.status(400).json({ error: 'token_limit_reached', message: 'Maximum 10 active tokens allowed.' });
+    if (tokenLimit !== null && count >= tokenLimit) {
+      return res.status(400).json({
+        error: 'token_limit_reached',
+        message: `Your plan allows up to ${tokenLimit} active token(s).`,
+        limit: tokenLimit,
+      });
     }
 
     const secret = crypto.randomBytes(32).toString('hex');

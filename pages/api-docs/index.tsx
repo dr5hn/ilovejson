@@ -7,9 +7,11 @@ export default function ApiDocsPage() {
       <Head>
         <title>API Documentation — ILoveJSON</title>
         <meta name="description" content="Interactive API documentation for the ILoveJSON REST API." />
-        <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui.css" />
-        <style>{`body { margin: 0; } .swagger-ui .topbar { display: none; }`}</style>
       </Head>
+
+      {/* eslint-disable-next-line @next/next/no-css-tags */}
+      <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui.css" />
+      <style>{`body { margin: 0; } .swagger-ui .topbar { display: none; }`}</style>
 
       <div id="swagger-ui" />
 

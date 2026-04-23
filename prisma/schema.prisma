@@ -10,19 +10,34 @@ datasource db {
   provider = "postgresql"
 }
 
+enum SubscriptionTier {
+  FREE
+  PRO
+  BUSINESS
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
 model User {
-  id            String       @id @default(cuid())
+  id            String        @id @default(cuid())
   name          String?
-  email         String?      @unique
+  email         String?       @unique
   emailVerified DateTime?
   image         String?
+  trialUsedAt   DateTime?
   accounts      Account[]
   sessions      Session[]
   conversions   Conversion[]
-  savedFiles    SavedFile[]
   apiTokens     ApiToken[]
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  subscription  Subscription?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model Account {
@@ -74,21 +89,6 @@ model Conversion {
   @@index([createdAt])
 }
 
-model SavedFile {
-  id        String   @id @default(cuid())
-  userId    String
-  name      String
-  path      String
-  size      Int
-  type      String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([expiresAt])
-}
-
 model ApiToken {
   id          String     @id @default(cuid())
   userId      String
@@ -119,4 +119,32 @@ model ApiUsage {
 
   @@index([tokenId, createdAt])
   @@index([createdAt])
+}
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  userId             String             @unique
+  tier               SubscriptionTier   @default(FREE)
+  status             SubscriptionStatus @default(ACTIVE)
+  dodoSubscriptionId String?            @unique
+  dodoCustomerId     String?
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PaymentEvent {
+  id          String   @id @default(cuid())
+  userId      String?
+  dodoEventId String   @unique
+  eventType   String
+  payload     Json
+  processedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([dodoEventId])
 }
