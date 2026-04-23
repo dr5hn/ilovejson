@@ -27,7 +27,7 @@
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "exceljs": "4.4.0",
-    "fast-xml-parser": "5.5.10",
+    "fast-xml-parser": "5.7.0",
     "formidable": "3.5.4",
     "jmespath": "^0.16.0",
     "json-2-csv": "5.5.10",
