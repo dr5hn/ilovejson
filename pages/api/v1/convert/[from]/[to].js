@@ -4,7 +4,7 @@ import * as conv from '@lib/converters';
 const OUTPUT_LIMIT = 50 * 1024 * 1024; // 50 MB
 
 
-export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
+export const config = { api: { bodyParser: { sizeLimit: '2gb' } } };
 
 const SUPPORTED = {
   'json/csv':        async (input, opts) => ({ output: await conv.jsonToCsv(input), format: 'csv' }),

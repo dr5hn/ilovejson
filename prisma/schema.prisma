@@ -16,6 +16,11 @@ enum SubscriptionTier {
   BUSINESS
 }
 
+enum ToolsTier {
+  FREE
+  PRO
+}
+
 enum SubscriptionStatus {
   ACTIVE
   TRIALING
@@ -124,10 +129,12 @@ model ApiUsage {
 model Subscription {
   id                 String             @id @default(cuid())
   userId             String             @unique
-  tier               SubscriptionTier   @default(FREE)
-  status             SubscriptionStatus @default(ACTIVE)
-  dodoSubscriptionId String?            @unique
-  dodoCustomerId     String?
+  tier                    SubscriptionTier   @default(FREE)
+  status                  SubscriptionStatus @default(ACTIVE)
+  dodoSubscriptionId      String?            @unique
+  dodoCustomerId          String?
+  toolsTier               ToolsTier          @default(FREE)
+  toolsDodoSubscriptionId String?            @unique
   currentPeriodStart DateTime?
   currentPeriodEnd   DateTime?
   cancelAtPeriodEnd  Boolean            @default(false)

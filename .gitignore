@@ -28,3 +28,4 @@ npm-debug.log*
 
 # service worker
 /public/sw*
+.data/

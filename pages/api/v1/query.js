@@ -1,7 +1,7 @@
 import { createV1Handler } from '@lib/v1Handler';
 import { jsonQuery } from '@lib/converters';
 
-export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
+export const config = { api: { bodyParser: { sizeLimit: '2gb' } } };
 
 export default createV1Handler(async (req, res) => {
   const { input, expr } = req.body || {};

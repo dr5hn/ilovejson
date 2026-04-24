@@ -6,19 +6,21 @@ const GB = 1024 * MB;
 export const TIER_ENTITLEMENTS = {
   FREE: {
     storageCapBytes: 100 * MB,
-    maxUploadBytes: 100 * MB,
+    maxUploadBytes: 5 * MB,
     historyRetentionDays: 30,
     apiEnabled: false,
     apiRateLimit: { perMinute: 0, perDay: 0 },
     apiTokenLimit: 0,
+    apiMaxInputBytes: 5 * MB,
   },
   PRO: {
     storageCapBytes: 10 * GB,
-    maxUploadBytes: 500 * MB,
+    maxUploadBytes: 100 * MB,
     historyRetentionDays: 365,
     apiEnabled: true,
     apiRateLimit: { perMinute: 60, perDay: 10000 },
     apiTokenLimit: 3,
+    apiMaxInputBytes: 100 * MB,
   },
   BUSINESS: {
     storageCapBytes: 100 * GB,
@@ -27,6 +29,7 @@ export const TIER_ENTITLEMENTS = {
     apiEnabled: true,
     apiRateLimit: { perMinute: 600, perDay: 1000000 },
     apiTokenLimit: null,
+    apiMaxInputBytes: 2 * GB,
   },
 };
 

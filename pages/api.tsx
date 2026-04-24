@@ -1,10 +1,11 @@
-"use client"
-
 import Head from 'next/head';
 import Link from 'next/link';
 import { useState } from 'react';
 import { Header } from '@components/Header';
 import { Footer } from '@components/Footer';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@lib/auth';
+import prisma from '@lib/prisma';
 
 const CONVERSIONS = [
   'JSON → CSV', 'CSV → JSON', 'JSON → YAML', 'YAML → JSON',
@@ -138,7 +139,7 @@ function Check() {
   );
 }
 
-export default function ApiLandingPage() {
+export default function ApiLandingPage({ currentTier, paymentsEnabled }: { currentTier: string | null, paymentsEnabled: boolean }) {
   const [activeTab, setActiveTab] = useState(0);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState('');
@@ -443,47 +444,66 @@ export default function ApiLandingPage() {
               )}
 
               <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-                {PLANS.map(plan => (
-                  <div
-                    key={plan.key}
-                    className={`relative rounded-2xl border p-8 flex flex-col ${
-                      plan.highlight
-                        ? 'border-red-400 shadow-2xl shadow-red-500/10 bg-card'
-                        : 'border-border bg-card'
-                    }`}
-                  >
-                    {plan.badge && (
-                      <span className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 text-white text-xs font-bold rounded-full whitespace-nowrap ${plan.highlight ? 'bg-red-500' : 'bg-foreground'}`}>
-                        {plan.badge}
-                      </span>
-                    )}
-                    <div className="mb-6">
-                      <h3 className="text-xl font-black text-foreground mb-1">{plan.name}</h3>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-black text-foreground">${plan.price}</span>
-                        <span className="text-muted-foreground text-sm">/month</span>
-                      </div>
-                    </div>
-                    <ul className="space-y-3 flex-1 mb-8">
-                      {plan.perks.map(p => (
-                        <li key={p} className="flex items-start gap-2 text-sm text-foreground">
-                          <Check />{p}
-                        </li>
-                      ))}
-                    </ul>
-                    <button
-                      onClick={() => goToCheckout(plan.planId)}
-                      disabled={!!loadingPlan}
-                      className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 ${
-                        plan.highlight
-                          ? 'bg-red-500 text-white hover:bg-red-600'
-                          : 'border border-border text-foreground hover:bg-secondary'
+                {PLANS.map(plan => {
+                  const isActive = currentTier?.toUpperCase() === plan.key;
+                  return (
+                    <div
+                      key={plan.key}
+                      className={`relative rounded-2xl border-2 p-8 flex flex-col ${
+                        isActive
+                          ? 'border-green-500 shadow-xl shadow-green-500/10 bg-card'
+                          : plan.highlight
+                          ? 'border-red-400 shadow-2xl shadow-red-500/10 bg-card'
+                          : 'border-border bg-card'
                       }`}
                     >
-                      {loadingPlan === plan.planId ? 'Redirecting…' : plan.cta}
-                    </button>
-                  </div>
-                ))}
+                      {isActive ? (
+                        <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full whitespace-nowrap">
+                          ✓ Current plan
+                        </span>
+                      ) : plan.badge ? (
+                        <span className={`absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 text-white text-xs font-bold rounded-full whitespace-nowrap ${plan.highlight ? 'bg-red-500' : 'bg-foreground'}`}>
+                          {plan.badge}
+                        </span>
+                      ) : null}
+                      <div className="mb-6">
+                        <h3 className="text-xl font-black text-foreground mb-1">{plan.name}</h3>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-4xl font-black text-foreground">${plan.price}</span>
+                          <span className="text-muted-foreground text-sm">/month</span>
+                        </div>
+                      </div>
+                      <ul className="space-y-3 flex-1 mb-8">
+                        {plan.perks.map(p => (
+                          <li key={p} className="flex items-start gap-2 text-sm text-foreground">
+                            <Check />{p}
+                          </li>
+                        ))}
+                      </ul>
+                      {isActive ? (
+                        <div className="w-full py-3 rounded-xl bg-green-50 border border-green-200 text-sm font-semibold text-green-700 text-center">
+                          ✓ Your current plan
+                        </div>
+                      ) : paymentsEnabled ? (
+                        <button
+                          onClick={() => goToCheckout(plan.planId)}
+                          disabled={!!loadingPlan}
+                          className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 ${
+                            plan.highlight
+                              ? 'bg-red-500 text-white hover:bg-red-600'
+                              : 'border border-border text-foreground hover:bg-secondary'
+                          }`}
+                        >
+                          {loadingPlan === plan.planId ? 'Redirecting…' : plan.cta}
+                        </button>
+                      ) : (
+                        <button disabled className="w-full py-3 rounded-xl border border-border text-sm font-semibold text-muted-foreground cursor-not-allowed">
+                          Coming soon
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               <p className="text-center text-sm text-muted-foreground mt-8">
@@ -526,4 +546,26 @@ export default function ApiLandingPage() {
       </div>
     </>
   );
+}
+
+export async function getServerSideProps(context: any) {
+  const session = await getServerSession(context.req, context.res, authOptions);
+
+  let currentTier = null;
+  if (session?.user?.id) {
+    const sub = await prisma.subscription.findUnique({
+      where: { userId: session.user.id },
+      select: { tier: true, status: true },
+    });
+    if (sub && (sub.status === 'ACTIVE' || sub.status === 'TRIALING')) {
+      currentTier = sub.tier;
+    }
+  }
+
+  return {
+    props: {
+      paymentsEnabled: !!process.env.DODO_API_KEY,
+      currentTier,
+    },
+  };
 }

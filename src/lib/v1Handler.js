@@ -95,10 +95,21 @@ export function createV1Handler(fn, methods = ['POST']) {
       });
     }
 
-    const start = Date.now();
+    // Enforce per-tier input size limit
     const inputBytes = req.headers['content-length']
       ? parseInt(req.headers['content-length'], 10)
       : Buffer.byteLength(JSON.stringify(req.body || ''));
+
+    if (entitlements.apiMaxInputBytes && inputBytes > entitlements.apiMaxInputBytes) {
+      const limitMB = Math.round(entitlements.apiMaxInputBytes / (1024 * 1024));
+      return res.status(413).json({
+        error: 'payload_too_large',
+        message: `Your plan allows a maximum input size of ${limitMB} MB per request.`,
+        limit_bytes: entitlements.apiMaxInputBytes,
+      });
+    }
+
+    const start = Date.now();
 
     let outputBytes = 0;
     const originalJson = res.json.bind(res);

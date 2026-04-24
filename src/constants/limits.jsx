@@ -78,3 +78,15 @@ export function formatSize(bytes) {
 }
 
 export { defaults as defaultLimits };
+
+/**
+ * Maximum files per request per subscription tier.
+ * FREE = 1 file (anyone, anonymous or free account)
+ * PRO  = 10 files per request
+ * BUSINESS = unlimited (represented as Infinity)
+ */
+export const TIER_BATCH_LIMITS = {
+  FREE: 1,
+  PRO: 10,
+  BUSINESS: Infinity,
+};

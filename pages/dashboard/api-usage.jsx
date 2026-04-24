@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useRouter } from 'next/router';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@lib/auth';
 import DashboardLayout from '@components/dashboard/DashboardLayout';
@@ -53,6 +54,16 @@ function BarChart({ data }) {
 }
 
 export default function ApiUsagePage({ dailyUsage, routeBreakdown, topTokens, totals, dailyLimit }) {
+  const router = useRouter();
+
+  // Re-fetch server props when the tab regains focus so plan changes
+  // (e.g. returning from the billing portal) are reflected immediately.
+  useEffect(() => {
+    const refresh = () => router.replace(router.asPath);
+    window.addEventListener('focus', refresh);
+    return () => window.removeEventListener('focus', refresh);
+  }, [router]);
+
   const usedToday = totals.today;
   const remaining = dailyLimit === null ? null : Math.max(0, dailyLimit - usedToday);
   const pct = dailyLimit ? Math.min(100, Math.round((usedToday / dailyLimit) * 100)) : 0;

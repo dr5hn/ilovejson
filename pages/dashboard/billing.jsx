@@ -22,8 +22,8 @@ const PLANS = [
     name: 'Free',
     price: { monthly: 0, annual: 0 },
     description: 'Everything you need to get started.',
-    features: ['100 MB max upload size', '30-day conversion history', 'All conversion & utility tools', 'Unlimited anonymous usage'],
-    missing: ['API access', 'Priority support'],
+    features: ['5 MB max upload size', '30-day conversion history', 'All conversion & utility tools', 'Unlimited anonymous usage'],
+    missing: [],
   },
   {
     key: 'PRO',
@@ -32,7 +32,7 @@ const PLANS = [
     planId: { monthly: 'pro_monthly', annual: 'pro_annual' },
     description: 'For power users who need more headroom.',
     badge: 'Most popular',
-    features: ['500 MB max upload size', '1-year conversion history', 'API access (60 req/min, 10 000/day)', 'Up to 3 API tokens', 'Email support'],
+    features: ['100 MB max upload size', '1-year conversion history', 'API access (60 req/min, 10 000/day)', 'Up to 3 API tokens', 'Email support'],
     missing: [],
   },
   {
@@ -272,11 +272,6 @@ export default function BillingPage({ subscription: initialSubscription, payment
                         <Check />{f}
                       </li>
                     ))}
-                    {plan.missing.map(f => (
-                      <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground line-through">
-                        <Cross />{f}
-                      </li>
-                    ))}
                   </ul>
 
                   {isCurrent ? (
@@ -327,7 +322,7 @@ export default function BillingPage({ subscription: initialSubscription, payment
           <h2 className="text-lg font-semibold text-foreground mb-4">Your plan limits</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
             {[
-              { label: 'Max upload', value: tier === 'FREE' ? '100 MB' : tier === 'PRO' ? '500 MB' : '2 GB' },
+              { label: 'Max upload', value: tier === 'FREE' ? '5 MB' : tier === 'PRO' ? '100 MB' : '2 GB' },
               { label: 'History', value: tier === 'FREE' ? '30 days' : tier === 'PRO' ? '1 year' : 'Unlimited' },
               { label: 'API access', value: tier === 'FREE' ? 'None' : 'Enabled' },
               { label: 'API rate limit', value: tier === 'FREE' ? '—' : tier === 'PRO' ? '60/min, 10K/day' : '600/min, 1M/day' },
