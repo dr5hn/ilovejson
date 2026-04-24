@@ -38,6 +38,13 @@ export const authOptions = {
     signOut: '/auth/signout',
     error: '/auth/error',
   },
+  events: {
+    createUser: async ({ user }) => {
+      await prisma.subscription.create({
+        data: { userId: user.id, tier: 'FREE', status: 'ACTIVE' },
+      }).catch(() => {});
+    },
+  },
   callbacks: {
     session: async ({ session, user }) => {
       if (session?.user) {

@@ -6,6 +6,7 @@ import { runMiddleware } from '@middleware/apiMiddleware';
 import { validateMethod } from '@middleware/methodValidation';
 import { rateLimit } from '@middleware/rateLimit';
 import { parseFile } from '@middleware/fileParser';
+import { toolsLimit } from '@middleware/toolsLimit';
 import { errorHandler } from '@middleware/errorHandler';
 import { getToolLimits } from '@constants/limits';
 
@@ -26,7 +27,8 @@ async function handler(req, res) {
   await runMiddleware(req, res, [
     validateMethod(['POST']),
     rateLimit({ maxRequests: 50, windowMs: 60000 }), // Higher limit for query tool
-    parseFile(uploadDir, { maxFileSize: getToolLimits('jsonquery').maxFileSize }), // 100MB
+    toolsLimit(),
+    parseFile(uploadDir, { maxFileSize: getToolLimits('jsonquery').maxFileSize, tieredBatch: true }), // 100MB
   ]);
 
   // Get query from formidable-parsed fields (req.body is undefined when bodyParser: false)

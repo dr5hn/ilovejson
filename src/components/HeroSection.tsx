@@ -63,8 +63,10 @@ export function HeroSection() {
   const handleSearchSubmit = useCallback(() => {
     if (searchResults.length > 0) {
       router.push(searchResults[0].href)
-      setShowResults(false)
+    } else {
+      router.push("/json-to-csv")
     }
+    setShowResults(false)
   }, [searchResults, router])
 
   return (

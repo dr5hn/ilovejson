@@ -10,18 +10,39 @@ datasource db {
   provider = "postgresql"
 }
 
+enum SubscriptionTier {
+  FREE
+  PRO
+  BUSINESS
+}
+
+enum ToolsTier {
+  FREE
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
 model User {
-  id            String       @id @default(cuid())
+  id            String        @id @default(cuid())
   name          String?
-  email         String?      @unique
+  email         String?       @unique
   emailVerified DateTime?
   image         String?
+  trialUsedAt   DateTime?
   accounts      Account[]
   sessions      Session[]
   conversions   Conversion[]
-  savedFiles    SavedFile[]
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  apiTokens     ApiToken[]
+  subscription  Subscription?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model Account {
@@ -73,17 +94,64 @@ model Conversion {
   @@index([createdAt])
 }
 
-model SavedFile {
-  id        String   @id @default(cuid())
-  userId    String
-  name      String
-  path      String
-  size      Int
-  type      String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model ApiToken {
+  id          String     @id @default(cuid())
+  userId      String
+  name        String
+  tokenHash   String     @unique
+  tokenPrefix String
+  lastUsedAt  DateTime?
+  createdAt   DateTime   @default(now())
+  revokedAt   DateTime?
+  expiresAt   DateTime?
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usages      ApiUsage[]
 
   @@index([userId])
-  @@index([expiresAt])
+  @@index([tokenHash])
+}
+
+model ApiUsage {
+  id          String   @id @default(cuid())
+  tokenId     String
+  route       String
+  status      Int
+  inputBytes  Int      @default(0)
+  outputBytes Int      @default(0)
+  durationMs  Int      @default(0)
+  createdAt   DateTime @default(now())
+  token       ApiToken @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+
+  @@index([tokenId, createdAt])
+  @@index([createdAt])
+}
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  userId             String             @unique
+  tier                    SubscriptionTier   @default(FREE)
+  status                  SubscriptionStatus @default(ACTIVE)
+  dodoSubscriptionId      String?            @unique
+  dodoCustomerId          String?
+  toolsTier               ToolsTier          @default(FREE)
+  toolsDodoSubscriptionId String?            @unique
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PaymentEvent {
+  id          String   @id @default(cuid())
+  userId      String?
+  dodoEventId String   @unique
+  eventType   String
+  payload     Json
+  processedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([dodoEventId])
 }

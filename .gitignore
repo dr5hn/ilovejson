@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+.env
 
 # testing
 /coverage
@@ -27,3 +28,4 @@ npm-debug.log*
 
 # service worker
 /public/sw*
+.data/

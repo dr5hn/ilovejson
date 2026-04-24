@@ -5,7 +5,13 @@ module.exports = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
+  turbopack: {
+    root: __dirname,
   },
-}
+  async rewrites() {
+    return [
+      // /api/docs → Swagger UI page
+      { source: '/api/docs', destination: '/api-docs' },
+    ];
+  },
+};

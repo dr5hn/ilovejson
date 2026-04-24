@@ -6,6 +6,7 @@ import { runMiddleware } from '@middleware/apiMiddleware';
 import { validateMethod } from '@middleware/methodValidation';
 import { rateLimit } from '@middleware/rateLimit';
 import { parseFile } from '@middleware/fileParser';
+import { toolsLimit } from '@middleware/toolsLimit';
 import { errorHandler } from '@middleware/errorHandler';
 import { getToolLimits } from '@constants/limits';
 
@@ -30,7 +31,8 @@ async function handler(req, res) {
   await runMiddleware(req, res, [
     validateMethod(['POST']),
     rateLimit({ maxRequests: 20, windowMs: 60000 }),
-    parseFile(uploadDir, { maxFileSize: getToolLimits('yamltojson').maxFileSize }), // 100MB
+    toolsLimit(),
+    parseFile(uploadDir, { maxFileSize: getToolLimits('yamltojson').maxFileSize, tieredBatch: true }), // 100MB
   ]);
 
   // Core conversion logic
